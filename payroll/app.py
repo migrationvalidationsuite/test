@@ -19,15 +19,15 @@ from config_manager import (
     initialize_directories,
     render_template_editor,
     manage_picklists,
-    # render_column_mapping_interface,  # ❌ Remove this if not defined
+    render_column_mapping_interface,
     get_source_columns,
     get_picklist_columns,
     load_config,
     DEFAULT_TEMPLATES,
     save_config,
-    show_admin_panel,
-    process_uploaded_file
+    render_admin_config_manager
 )
+
 
 from foundation_module.foundation_app import render as render_foundation
 from employee_app import render_employee_tool
