@@ -210,10 +210,11 @@ def render_payroll_tool():
         st.markdown("## 🛠️ Payroll Data – Configuration Manager")
         initialize_directories()
 
+        # Correct syntax (using square brackets)
         tabA, tabB, tabC, tabD = st.tabs([
             "📂 Source File Samples",
             "📄 Destination Templates",
-            "🗃️ Picklist Management",
+            "🗃️ Picklist Management", 
             "🔄 Column Mapping"
         ], key="config_manager_tabs")
 
