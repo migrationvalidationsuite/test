@@ -442,14 +442,14 @@ def render_column_mapping_interface():
 
     st.markdown("### ➕ Add New Mapping")
 
-    # Dynamically determine applies_to options (for Payroll vs Foundation)
-    template_keys = list(DEFAULT_TEMPLATES.keys())
-    if "pa0008" in template_keys or "pa0014" in template_keys:
+def render_column_mapping_interface(mode="foundation"):
+    if mode == "payroll":
         applies_to_options = ["PA0008", "PA0014"]
         source_file_options = ["PA0008", "PA0014"]
     else:
         applies_to_options = ["Level", "Association"]
         source_file_options = ["HRP1000", "HRP1001"]
+
 
     applies_to = st.selectbox("Applies To*", applies_to_options)
     source_file = st.selectbox("Source File*", source_file_options)
