@@ -223,4 +223,5 @@ def render_payroll_tool():
             manage_picklists()
 
         with tabD:
-            render_column_mapping_interface()
+            render_column_mapping_interface(mode="payroll")
+
