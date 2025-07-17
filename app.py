@@ -480,11 +480,11 @@ elif selected == "Launch Demo":
     elif st.session_state.demo_page == "foundation_data_v2":
         back_col, _ = st.columns([1, 5])
         with back_col:
-            if st.button("⬅ Back to Demo", key="back_from_foundation_v2", use_container_width=True):
+            if st.button("⬅ Back to Demo", key="back_from_foundation_v2"):
                 st.session_state.demo_page = "sap_to_sf"
                 st.rerun()
-
-        st.markdown("### Foundation Data V2 – Configuration Manager")
+    
+        from config_manager import show_admin_panel  # Import here if circular imports exist
         show_admin_panel()
 
 
