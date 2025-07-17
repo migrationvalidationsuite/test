@@ -97,7 +97,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-def render_template_editor(template_type=None):
+def render_template_editor(template_type=template_type):
     """
     Render the template editor interface with payroll-specific handling
     """
