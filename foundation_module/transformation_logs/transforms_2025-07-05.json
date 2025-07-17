@@ -1,0 +1,16 @@
+[
+  {
+    "timestamp": "2025-07-05T01:48:44.860028",
+    "operation": "Clean text in columns: Name",
+    "details": {
+      "type": "Clean Text",
+      "rows_affected": 693
+    },
+    "before": [
+      {
+        "Client": 913,
+        "Plan version": 1,
+        "Object type": "O",
+        "Object ID": 51002422,
+        "Planning status": 1,
+        "Start date": 
