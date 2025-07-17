@@ -97,6 +97,48 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
+def render_template_editor():
+    """
+    Render the template editor interface
+    """
+    st.subheader("Template Editor")
+    
+    config = load_config()
+    templates = config.get('templates', DEFAULT_TEMPLATES)
+    
+    # Template selection
+    template_names = list(templates.keys())
+    selected_template = st.selectbox("Select Template", template_names)
+    
+    if selected_template:
+        # Edit template
+        template_content = templates[selected_template]
+        
+        # Convert to text for editing
+        template_text = convert_template_to_text(template_content)
+        
+        edited_template = st.text_area(
+            f"Edit {selected_template}",
+            value=template_text,
+            height=300
+        )
+        
+        if st.button("Save Template"):
+            try:
+                # Try to parse as JSON if it looks like JSON
+                if edited_template.strip().startswith('{'):
+                    parsed_template = json.loads(edited_template)
+                else:
+                    parsed_template = edited_template
+                
+                # Update config
+                config['templates'][selected_template] = parsed_template
+                save_config(config)
+                st.success(f"Template '{selected_template}' saved successfully")
+            except json.JSONDecodeError as e:
+                st.error(f"Invalid JSON format: {str(e)}")
+
+
 def show_admin_panel():
     """
     Show the admin panel for configuration management
