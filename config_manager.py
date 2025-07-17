@@ -459,11 +459,14 @@ def render_column_mapping_interface(mode="foundation"):
         st.warning(f"⚠️ No uploaded sample file found for {source_file}. Please upload one under 'Source File Samples'.")
         return
 
-    # Load current template for the selected source
     template = load_config(source_file.lower()) or DEFAULT_TEMPLATES.get(source_file.lower(), {})
 
-    # Build Target Column display values
+    if not template:
+        st.error(f"No template found for source file: {source_file}")
+        return
+
     all_target_keys = list(template.keys())
+
     target_display_options = [f"{key} | {template[key].get('display_name', '')}" for key in all_target_keys]
 
     # Select mappings
