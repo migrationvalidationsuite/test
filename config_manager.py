@@ -430,231 +430,101 @@ def manage_picklists() -> None:
                         except Exception as e:
                             st.error(f"Error deleting: {str(e)}")
 
+def render_column_mapping_interface():
+    st.subheader("🧩 Column Mapping Configuration")
 
+    # CSV Export
+    col1, _ = st.columns([1, 4])
+    with col1:
+        if st.button("Download Current Mappings (CSV)"):
+            mappings_df = pd.read_csv("config/column_mapping.csv")
+            st.download_button("Download Mappings", data=mappings_df.to_csv(index=False), file_name="column_mapping.csv")
 
+    st.markdown("### ➕ Add New Mapping")
 
-
-
-
-
-def render_column_mapping_interface() -> None:
-    """Render the column mapping configuration interface."""
-    st.subheader("Column Mapping Configuration")
-    
-    current_mappings = load_config("column_mappings") or []
-    df_mappings = pd.DataFrame(current_mappings)
-    
-    st.download_button(
-        "Download Current Mappings (CSV)",
-        data=df_mappings.to_csv(index=False),
-        file_name="current_mappings.csv",
-        mime="text/csv",
-        help="Download all current mappings as a CSV file"
-    )
-    
-    with st.expander("➕ Add New Mapping", expanded=True):
-        cols = st.columns([2, 2, 1])
-        with cols[0]:
-            applies_to = st.selectbox("Applies To*", ["Level", "Association", "Both"])
-            
-            target_options = []
-            if applies_to in ["Level", "Both"]:
-                level_template = load_config("level") or DEFAULT_TEMPLATES["level"]
-                target_options.extend([f"{col['target_column1']} | {col['target_column2']}" for col in level_template])
-            
-            if applies_to in ["Association", "Both"]:
-                assoc_template = load_config("association") or DEFAULT_TEMPLATES["association"]
-                target_options.extend([f"{col['target_column1']} | {col['target_column2']}" for col in assoc_template])
-            
-            target_selection = st.selectbox("Target Column*", sorted(set(target_options)))
-            target_col1, target_col2 = target_selection.split(" | ") if target_selection else ("", "")
-            
-            st.text_input("System Column Name", value=target_col1, disabled=True)
-            st.text_input("Display Name", value=target_col2, disabled=True)
-        
-        with cols[1]:
-            source_file = st.selectbox("Source File*", ["HRP1000", "HRP1001"])
-            source_columns = get_source_columns(source_file)
-            source_col = st.selectbox("Source Column", [""] + source_columns, 
-                                    help="Leave empty if using only default value")
-        
-        with cols[2]:
-            default_val = st.text_input("Default Value", 
-                                      help="Value to use if source is empty or no source column selected")
-            picklist_options = [""] + sorted([f for f in os.listdir(PICKLIST_DIR) if f.endswith('.csv')]) if os.path.exists(PICKLIST_DIR) else [""]
-            picklist_file = st.selectbox("Picklist File", picklist_options)
-        
-        st.subheader("Transformation Rules")
-        trans_col1, trans_col2 = st.columns(2)
-        with trans_col1:
-            trans_type = st.selectbox("Transformation Type", list(TRANSFORMATION_LIBRARY.keys()))
-        
-        with trans_col2:
-            picklist_col = ""
-            second_col = ""
-            custom_code = ""
-            
-            if trans_type == "Concatenate":
-                second_col = st.selectbox("Second Column to Concatenate", [""] + source_columns)
-            elif trans_type == "Lookup Value":
-                if picklist_file:
-                    picklist_col = st.selectbox("Picklist Column", [""] + get_picklist_columns(picklist_file))
-                else:
-                    st.warning("Select a picklist file first")
-            elif trans_type == "Custom Python":
-                with st.expander("Python Transformation Guide"):
-                    st.markdown(PYTHON_TRANSFORMATION_GUIDE)
-                custom_code = st.text_area(
-                    "Python Expression (use 'value' as input)",
-                    value="value",
-                    height=100
-                )
-        
-        if st.button("Add Mapping"):
-            if not all([target_col1, target_col2, applies_to, source_file]):
-                st.error("Please fill all required fields (*)")
-            elif not source_col and not default_val:
-                st.error("Either Source Column or Default Value must be provided")
-            else:
-                new_mapping = {
-                    "target_column1": target_col1,
-                    "target_column2": target_col2,
-                    "source_file": source_file,
-                    "source_column": source_col if source_col else "",
-                    "transformation": trans_type,
-                    "transformation_code": TRANSFORMATION_LIBRARY.get(trans_type, ""),
-                    "default_value": default_val,
-                    "picklist_source": picklist_file,
-                    "picklist_column": picklist_col if trans_type == "Lookup Value" else "",
-                    "applies_to": applies_to
-                }
-                
-                if trans_type == "Concatenate":
-                    new_mapping["secondary_column"] = second_col
-                elif trans_type == "Custom Python":
-                    new_mapping["transformation_code"] = custom_code
-                
-                updated_mappings = current_mappings + [new_mapping]
-                save_config("column_mappings", updated_mappings)
-                st.success("Mapping added!")
-                st.rerun()
-    
-    st.subheader("Current Mappings")
-    if not current_mappings:
-        st.info("No mappings configured yet")
+    # Dynamically determine applies_to options (for Payroll vs Foundation)
+    template_keys = list(DEFAULT_TEMPLATES.keys())
+    if "pa0008" in template_keys or "pa0014" in template_keys:
+        applies_to_options = ["PA0008", "PA0014"]
+        source_file_options = ["PA0008", "PA0014"]
     else:
-        for i, mapping in enumerate(current_mappings):
-            with st.expander(f"Mapping {i+1}: {mapping.get('target_column1', '')}", expanded=False):
-                cols = st.columns(3)
-                with cols[0]:
-                    st.text_input("System Column Name", value=mapping.get("target_column1"), key=f"h1_{i}")
-                    st.text_input("Display Name", value=mapping.get("target_column2"), key=f"h2_{i}")
-                with cols[1]:
-                    st.selectbox("Source File", ["HRP1000", "HRP1001"], 
-                                index=0 if mapping.get("source_file") == "HRP1000" else 1,
-                                key=f"sf_{i}")
-                    source_cols = get_source_columns(mapping.get("source_file"))
-                    st.selectbox("Source Column", [""] + source_cols, 
-                                index=source_cols.index(mapping.get("source_column")) + 1 if mapping.get("source_column") in source_cols else 0,
-                                key=f"sc_{i}")
-                with cols[2]:
-                    st.text_input("Default", value=mapping.get("default_value"), key=f"def_{i}")
-                    st.selectbox("Applies To", ["Level", "Association", "Both"], 
-                                index=["Level", "Association", "Both"].index(mapping.get("applies_to")),
-                                key=f"app_{i}")
-                
-                if st.button(f"Update Mapping {i+1}", key=f"update_{i}"):
-                    current_mappings[i].update({
-                        "target_column1": st.session_state[f"h1_{i}"],
-                        "target_column2": st.session_state[f"h2_{i}"],
-                        "source_file": st.session_state[f"sf_{i}"],
-                        "source_column": st.session_state[f"sc_{i}"],
-                        "default_value": st.session_state[f"def_{i}"],
-                        "applies_to": st.session_state[f"app_{i}"]
-                    })
-                    save_config("column_mappings", current_mappings)
-                    st.success(f"Mapping {i+1} updated!")
-                    st.rerun()
-                
-                if st.button(f"Delete Mapping {i+1}", key=f"delete_{i}"):
-                    del current_mappings[i]
-                    save_config("column_mappings", current_mappings)
-                    st.success(f"Mapping {i+1} deleted!")
-                    st.rerun()
+        applies_to_options = ["Level", "Association"]
+        source_file_options = ["HRP1000", "HRP1001"]
 
+    applies_to = st.selectbox("Applies To*", applies_to_options)
+    source_file = st.selectbox("Source File*", source_file_options)
+    # Load available columns from uploaded sample files
+    available_source_columns = get_source_columns(source_file)
+    if not available_source_columns:
+        st.warning(f"⚠️ No uploaded sample file found for {source_file}. Please upload one under 'Source File Samples'.")
+        return
 
+    # Load current template for the selected source
+    template = load_config(source_file.lower()) or DEFAULT_TEMPLATES.get(source_file.lower(), {})
 
+    # Build Target Column display values
+    all_target_keys = list(template.keys())
+    target_display_options = [f"{key} | {template[key].get('display_name', '')}" for key in all_target_keys]
 
+    # Select mappings
+    target_column_display = st.selectbox("Target Column*", target_display_options)
+    target_column = target_column_display.split(" | ")[0]
+    source_column = st.selectbox("Source Column", available_source_columns)
+    default_value = st.text_input("Default Value")
+    picklist_options = get_picklist_columns()
+    picklist_file = st.selectbox("Picklist File", [""] + picklist_options)
 
+    # Show system and display names
+    st.text_input("System Column Name", value=target_column, disabled=True)
+    st.text_input("Display Name", value=template[target_column].get("display_name", ""), disabled=True)
+    # Save logic
+    if st.button("➕ Save Mapping"):
+        if target_column not in template:
+            template[target_column] = {}
 
+        # Initialize nested dict if not present
+        if applies_to not in template[target_column]:
+            template[target_column][applies_to] = {}
 
+        # Save values
+        template[target_column]["display_name"] = template[target_column].get("display_name", "")
+        template[target_column][applies_to]["source_file"] = source_file
+        template[target_column][applies_to]["source_column"] = source_column
+        template[target_column][applies_to]["default_value"] = default_value
+        template[target_column][applies_to]["picklist_file"] = picklist_file
 
-def show_admin_panel(state=None) -> None:
-    """Main admin panel interface with tabs."""
-    st.title("Configuration Manager")
-    initialize_directories()
-    
-    if state is None:
-        state = {
-            'hrp1000': None,
-            'hrp1001': None,
-            'hierarchy': None,
-            'transformations': [],
-            'validation_results': None,
-            'statistics': None
-        }
+        save_config(source_file.lower(), template)
+        st.success("✅ Mapping saved successfully.")
+    # Download logic
+    st.markdown("---")
+    st.subheader("📥 Download Current Mappings (CSV)")
 
-    tab1, tab2, tab3, tab4 = st.tabs([
-        "📂 Source File Samples",
-        "📄 Destination Templates", 
-        "🗃️ Picklist Management", 
-        "🔄 Column Mapping"
-    ])
+    def flatten_template(template_dict):
+        rows = []
+        for target, props in template_dict.items():
+            display = props.get("display_name", "")
+            for scope, cfg in props.items():
+                if scope == "display_name":
+                    continue
+                row = {
+                    "Target Column": target,
+                    "Display Name": display,
+                    "Applies To": scope,
+                    "Source File": cfg.get("source_file", ""),
+                    "Source Column": cfg.get("source_column", ""),
+                    "Default Value": cfg.get("default_value", ""),
+                    "Picklist File": cfg.get("picklist_file", "")
+                }
+                rows.append(row)
+        return pd.DataFrame(rows)
 
-    with tab1:
-        st.subheader("Upload Source File Samples")
-        st.info("Upload sample files first to configure column mappings")
-        
-        source_file_type = st.radio("Select source file type:", 
-                                  ["HRP1000", "HRP1001"],
-                                  horizontal=True)
-        
-        uploaded_file = st.file_uploader(
-            f"Upload {source_file_type} sample file (CSV or Excel)",
-            type=["csv", "xlsx"],
-            key=f"{source_file_type}_upload"
-        )
-        
-        if uploaded_file:
-            process_uploaded_file(uploaded_file, source_file_type)
-        
-        sample_path = os.path.join(SOURCE_SAMPLES_DIR, f"{source_file_type}_sample.csv")
-        if os.path.exists(sample_path):
-            st.subheader("Current Sample Information")
-            try:
-                df = pd.read_csv(sample_path, nrows=1)
-                st.info(f"Current sample has {len(df.columns)} columns")
-                
-                is_valid, message = validate_sample_columns(source_file_type, df)
-                st.success(message) if is_valid else st.error(message)
-                
-                st.subheader("Available Columns")
-                st.write(", ".join(df.columns.tolist()))
-                
-            except Exception as e:
-                st.error(f"Error loading sample: {str(e)}")
-        else:
-            st.info(f"No sample file uploaded for {source_file_type} yet")
+    flat_df = flatten_template(template)
+    st.download_button("📄 Download as CSV", data=flat_df.to_csv(index=False), file_name="column_mappings.csv", mime="text/csv")
+    st.markdown("---")
+    st.subheader("📋 Current Mapping Overview")
 
-    with tab2:
-        template_type = st.radio("Select template type:", 
-                               ["Level", "Association"],
-                               horizontal=True,
-                               key="template_type_radio")
-        render_template_editor(template_type)
+    if flat_df.empty:
+        st.info("No mappings available yet.")
+    else:
+        st.dataframe(flat_df, use_container_width=True)
 
-    with tab3:
-        manage_picklists()
-
-    with tab4:
-        render_column_mapping_interface()
