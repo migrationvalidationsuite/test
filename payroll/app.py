@@ -23,8 +23,9 @@ from config_manager import (
     DEFAULT_TEMPLATES,
     save_config,
     process_uploaded_file,
-    show_admin_panel
+    show_admin_panel  # ⛔️ Make sure this does NOT have a trailing comma
 )
+
 
 
 @st.cache_data
