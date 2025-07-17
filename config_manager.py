@@ -3,6 +3,9 @@ import json
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+# Add this at the top (or complete your current import)
+from typing import List, Dict, Optional, Tuple
+
 
 CONFIG_FILE = "config.json"
 DEFAULT_TEMPLATES = {
