@@ -97,47 +97,87 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-def render_template_editor():
+def render_template_editor(template_type=None):
     """
-    Render the template editor interface
+    Render the template editor interface with payroll-specific handling
     """
     st.subheader("Template Editor")
     
     config = load_config()
     templates = config.get('templates', DEFAULT_TEMPLATES)
     
+    # Payroll-specific template handling
+    if template_type == "payroll":
+        if "payroll_template" not in templates:
+            # Create a default payroll template based on the data structure
+            templates["payroll_template"] = {
+                "employee_id": {"type": "string", "source": "Pers.No."},
+                "wage_type": {"type": "string", "source": "Wage type"},
+                "amount": {"type": "number", "source": "Amount"},
+                "currency": {"type": "string", "source": "Crcy"},
+                "start_date": {"type": "date", "source": "Start Date"},
+                "end_date": {"type": "date", "source": "End Date"},
+                "assignment": {"type": "string", "source": "Assignment number"}
+            }
+            save_config(config)
+    
     # Template selection
     template_names = list(templates.keys())
+    if not template_names:
+        st.warning("No templates available")
+        return
+    
     selected_template = st.selectbox("Select Template", template_names)
     
     if selected_template:
-        # Edit template
-        template_content = templates[selected_template]
+        try:
+            # Edit template
+            template_content = templates[selected_template]
+            
+            # Convert to text for editing - handle both dict and string templates
+            if isinstance(template_content, dict):
+                template_text = json.dumps(template_content, indent=2)
+            else:
+                template_text = str(template_content)
+            
+            edited_template = st.text_area(
+                f"Edit {selected_template}",
+                value=template_text,
+                height=300
+            )
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Save Template"):
+                    try:
+                        # Try to parse as JSON if it looks like JSON
+                        if edited_template.strip().startswith('{'):
+                            parsed_template = json.loads(edited_template)
+                        else:
+                            parsed_template = edited_template
+                        
+                        # Update config
+                        config['templates'][selected_template] = parsed_template
+                        if save_config(config):
+                            st.success(f"Template '{selected_template}' saved successfully")
+                        else:
+                            st.error("Failed to save template")
+                    except json.JSONDecodeError as e:
+                        st.error(f"Invalid JSON format: {str(e)}")
+            
+            with col2:
+                if st.button("Delete Template"):
+                    if selected_template in config['templates']:
+                        del config['templates'][selected_template]
+                        if save_config(config):
+                            st.success(f"Template '{selected_template}' deleted")
+                            st.rerun()
+                        else:
+                            st.error("Failed to delete template")
         
-        # Convert to text for editing
-        template_text = convert_template_to_text(template_content)
-        
-        edited_template = st.text_area(
-            f"Edit {selected_template}",
-            value=template_text,
-            height=300
-        )
-        
-        if st.button("Save Template"):
-            try:
-                # Try to parse as JSON if it looks like JSON
-                if edited_template.strip().startswith('{'):
-                    parsed_template = json.loads(edited_template)
-                else:
-                    parsed_template = edited_template
-                
-                # Update config
-                config['templates'][selected_template] = parsed_template
-                save_config(config)
-                st.success(f"Template '{selected_template}' saved successfully")
-            except json.JSONDecodeError as e:
-                st.error(f"Invalid JSON format: {str(e)}")
-
+        except Exception as e:
+            st.error(f"Error rendering template editor: {str(e)}")
+            st.error("Please check the template format in your configuration")
 
 def show_admin_panel():
     """
