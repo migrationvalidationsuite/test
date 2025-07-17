@@ -23,8 +23,9 @@ from config_manager import (
     DEFAULT_TEMPLATES,
     save_config,
     show_admin_panel,
-    process_uploaded_file,
+    process_uploaded_file
 )
+
 
 
 @st.cache_data
