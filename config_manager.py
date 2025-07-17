@@ -126,6 +126,10 @@ def render_template_editor(template_type=None):
                             st.error("Failed to delete template")
         except Exception as e:
             st.error(f"Error rendering template editor: {str(e)}")
+# ✅ Define constants
+PICKLIST_DIR = "picklists"
+MAX_SAMPLE_ROWS = 100
+
 def manage_picklists():
     st.subheader("Picklist Management")
     os.makedirs(PICKLIST_DIR, exist_ok=True)
@@ -148,7 +152,6 @@ def manage_picklists():
             f.write(uploaded.read())
         st.success(f"{uploaded.name} uploaded successfully")
         st.rerun()
-
 
 def get_source_columns(file_path: str) -> List[str]:
     try:
