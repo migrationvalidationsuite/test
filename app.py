@@ -2,12 +2,14 @@ import os, sys
 import streamlit as st
 import base64
 from streamlit_option_menu import option_menu
+
 from foundation_module.foundation_app import render as render_foundation
-from payroll import app as payroll_app
 from employee_app import render_employee_tool
 from employeedata.app.data_migration_tool import render_employee_v2
-from payroll.app import render_payroll_tool
-payroll_app.render_payroll_tool()
+from payroll.app import render_payroll_tool  # ✅ correct import
+
+# ✅ Correct usage
+render_payroll_tool()
 
 
 # Hide Streamlit style (footer and hamburger menu)
