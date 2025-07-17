@@ -7,6 +7,9 @@ from foundation_module.foundation_app import render as render_foundation
 from employee_app import render_employee_tool
 from employeedata.app.data_migration_tool import render_employee_v2
 #from payroll.app import render_payroll_tool
+import payroll.app as payroll_app
+payroll_app.render_payroll_tool()
+
 
 
 # ✅ Correct usage
@@ -503,7 +506,6 @@ elif selected == "Launch Demo":
             next_page="employee_data_v2"
         )
 
-
     elif st.session_state.demo_page == "payroll_data_tool":
         back_col, _ = st.columns([1, 5])
         with back_col:
@@ -511,8 +513,10 @@ elif selected == "Launch Demo":
                 st.session_state.demo_page = "sap_to_sf"
                 st.rerun()
 
-        # ✅ This actually loads your payroll Streamlit tool
+    # ✅ Import and call inside this block to avoid circular import
+        import payroll.app as payroll_app
         payroll_app.render_payroll_tool()
+
 
     elif st.session_state.demo_page == "foundation_data_view":
         back_col, _ = st.columns([1, 5])
