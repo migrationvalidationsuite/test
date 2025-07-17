@@ -6,7 +6,7 @@ from foundation_module.foundation_app import render as render_foundation
 from payroll import app as payroll_app
 from employee_app import render_employee_tool
 from employeedata.app.data_migration_tool import render_employee_v2
-from payroll import app as payroll_app
+from payroll.app import render_payroll_tool
 payroll_app.render_payroll_tool()
 
 
