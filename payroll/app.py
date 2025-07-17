@@ -136,7 +136,12 @@ Answer this:
 def render_payroll_tool():
     st.title("🔍 Enhanced Payroll Mapping & Cleansing Tool")
 
-    view = st.radio("Select View Mode", ["Mapping & Cleansing", "Configuration Manager"], horizontal=True)
+    view = st.radio(
+        "Select View Mode", 
+        ["Mapping & Cleansing", "Configuration Manager"], 
+        horizontal=True,
+        key="payroll_view_mode"  # Add this unique key
+    )
 
     if view == "Mapping & Cleansing":
         with st.sidebar:
