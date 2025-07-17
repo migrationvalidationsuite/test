@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import json
 from pathlib import Path
-from utils.hierarchy_utils import get_default_mappings
+# from utils.hierarchy_utils import get_default_mappings
 from typing import List, Dict, Optional, Union
 import io
 
@@ -427,7 +427,7 @@ def render_column_mapping_interface() -> None:
     """Render the column mapping configuration interface."""
     st.subheader("Column Mapping Configuration")
     
-    current_mappings = load_config("column_mappings") or get_default_mappings()
+    current_mappings = load_config("column_mappings") or []
     df_mappings = pd.DataFrame(current_mappings)
     
     st.download_button(
