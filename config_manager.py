@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import json
+import io  # Add this missing import
 from pathlib import Path
 from typing import List, Dict, Optional, Union
 
@@ -47,7 +48,8 @@ DEFAULT_TEMPLATES = {
         {"target_column1": "amount", "target_column2": "Amount"},
         {"target_column1": "currency", "target_column2": "Currency"}
     ]
-]
+}
+
 def initialize_directories() -> None:
     for directory in [CONFIG_DIR, PICKLIST_DIR, SOURCE_SAMPLES_DIR]:
         Path(directory).mkdir(exist_ok=True)
@@ -90,12 +92,67 @@ def get_picklist_columns(picklist_file: str) -> List[str]:
     except Exception as e:
         st.error(f"Error reading picklist: {e}")
         return []
-def render_column_mapping_interface():
+
+def process_uploaded_file(uploaded_file, source_type: str):
+    """Process uploaded source file samples"""
+    try:
+        if uploaded_file.name.endswith('.csv'):
+            df = pd.read_csv(uploaded_file)
+        elif uploaded_file.name.endswith(('.xlsx', '.xls')):
+            df = pd.read_excel(uploaded_file)
+        else:
+            st.error("Unsupported file format")
+            return
+        
+        # Limit sample size
+        if len(df) > MAX_SAMPLE_ROWS:
+            df = df.head(MAX_SAMPLE_ROWS)
+            st.info(f"Sample limited to {MAX_SAMPLE_ROWS} rows")
+        
+        # Save as CSV
+        sample_path = os.path.join(SOURCE_SAMPLES_DIR, f"{source_type}_sample.csv")
+        df.to_csv(sample_path, index=False)
+        st.success(f"✅ {source_type} sample saved with {len(df)} rows, {len(df.columns)} columns")
+        
+        # Show preview
+        st.subheader("Sample Preview")
+        st.dataframe(df.head())
+        
+    except Exception as e:
+        st.error(f"Error processing file: {str(e)}")
+
+def convert_template_to_text(template: List[Dict]) -> str:
+    """Convert template to CSV text format"""
+    lines = ["System,Display,Description"]
+    for row in template:
+        desc = row.get('description', '')
+        lines.append(f"{row['target_column1']},{row['target_column2']},{desc}")
+    return "\n".join(lines)
+
+def convert_text_to_template(text: str) -> List[Dict]:
+    """Convert CSV text to template format"""
+    lines = text.strip().split('\n')
+    if not lines or not lines[0].lower().startswith('system'):
+        raise ValueError("First line must be header: System,Display,Description")
+    
+    template = []
+    for line in lines[1:]:
+        if line.strip():
+            parts = line.split(',')
+            if len(parts) >= 2:
+                template.append({
+                    'target_column1': parts[0].strip(),
+                    'target_column2': parts[1].strip(),
+                    'description': parts[2].strip() if len(parts) > 2 else ''
+                })
+    return template
+
+def render_column_mapping_interface(mode: str = "foundation"):
+    """Render column mapping interface with mode detection"""
     st.subheader("🧩 Column Mapping Configuration")
 
-    # Determine dynamic options
-    template_keys = list(DEFAULT_TEMPLATES.keys())
-    if "pa0008" in template_keys or "pa0014" in template_keys:
+    # Determine dynamic options based on mode
+    if mode == "payroll":
         applies_to_options = ["PA0008", "PA0014"]
         source_file_options = ["PA0008", "PA0014"]
     else:
@@ -113,6 +170,11 @@ def render_column_mapping_interface():
     template_type = applies_to.lower()
     template = load_config(template_type) or DEFAULT_TEMPLATES.get(template_type, [])
     target_options = [f"{row['target_column1']} | {row['target_column2']}" for row in template]
+    
+    if not target_options:
+        st.error(f"No template found for {template_type}")
+        return
+        
     selected = st.selectbox("Target Column*", target_options)
     target_col1, target_col2 = selected.split(" | ")
 
@@ -163,11 +225,12 @@ def render_column_mapping_interface():
         df = pd.DataFrame(current)
         st.dataframe(df, use_container_width=True)
         st.download_button("📄 Download Mappings as CSV", data=df.to_csv(index=False), file_name="column_mappings.csv", mime="text/csv")
+
 def render_template_editor(template_type: str):
     """Render the destination template editor (Level, Association, PA0008, etc.)"""
     st.subheader(f"{template_type} Template Configuration")
 
-    current_template = load_config(template_type.lower()) or DEFAULT_TEMPLATES[template_type.lower()]
+    current_template = load_config(template_type.lower()) or DEFAULT_TEMPLATES.get(template_type.lower(), [])
 
     if f"{template_type}_template" not in st.session_state:
         st.session_state[f"{template_type}_template"] = current_template.copy()
@@ -175,7 +238,7 @@ def render_template_editor(template_type: str):
     edit_mode = st.radio("Edit Mode", ["Table Editor", "Text Input"], horizontal=True)
 
     if st.button("Reset to Default"):
-        st.session_state[f"{template_type}_template"] = DEFAULT_TEMPLATES[template_type.lower()].copy()
+        st.session_state[f"{template_type}_template"] = DEFAULT_TEMPLATES.get(template_type.lower(), []).copy()
         save_config(template_type.lower(), st.session_state[f"{template_type}_template"])
         st.success("Reset to default template!")
         st.rerun()
@@ -242,6 +305,7 @@ def manage_picklists():
                     os.remove(f"{PICKLIST_DIR}/{file}")
                     st.success(f"{file} deleted")
                     st.rerun()
+
 def show_admin_panel():
     """Main admin panel interface with tabs (foundation + payroll)"""
     st.title("🛠️ Configuration Manager")
