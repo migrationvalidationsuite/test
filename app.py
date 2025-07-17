@@ -6,6 +6,8 @@ from streamlit_option_menu import option_menu
 from foundation_module.foundation_app import render as render_foundation
 from employee_app import render_employee_tool
 from employeedata.app.data_migration_tool import render_employee_v2
+from payroll.app import render_payroll_tool
+
 
 # ✅ Correct usage
 render_payroll_tool()
