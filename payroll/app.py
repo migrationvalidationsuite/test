@@ -3,6 +3,15 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 
+# Optional: LLM support
+try:
+    from langchain.llms import Ollama
+    from langchain.chains import LLMChain
+    from langchain.prompts import PromptTemplate
+    llm_enabled = True
+except:
+    llm_enabled = False
+
 from config_manager import (
     initialize_directories,
     load_config,
@@ -17,15 +26,6 @@ from config_manager import (
     validate_sample_columns,
     process_uploaded_file
 )
-
-# Optional: LLM support
-try:
-    from langchain.llms import Ollama
-    from langchain.chains import LLMChain
-    from langchain.prompts import PromptTemplate
-    llm_enabled = True
-except:
-    llm_enabled = False
 
 @st.cache_data
 def load_data(file):
@@ -68,7 +68,7 @@ def show_comparison(original, cleansed):
     return diff_df
 
 def display_metadata(df, label):
-    st.subheader(f"🧾 Metadata for {label}")
+    st.subheader(f"📜 Metadata for {label}")
     st.write("**Data Types:**")
     st.write(df.dtypes)
     st.write("**Null Count:**")
@@ -158,7 +158,7 @@ def render_payroll_tool():
         ])
 
         with tab1:
-            st.subheader("🧹 Cleanse & Compare")
+            st.subheader("🩹 Cleanse & Compare")
             col1, col2 = st.columns(2)
             with col1:
                 st.write("PA0008 – Original")
@@ -201,12 +201,12 @@ def render_payroll_tool():
             tabA, tabB, tabC, tabD = st.tabs([
                 "📂 Source File Samples",
                 "📄 Destination Templates",
-                "🗃️ Picklist Management",
+                "💃 Picklist Management",
                 "🔄 Column Mapping"
             ])
 
             with tabA:
-                st.subheader("Upload Source File Samples")
+                st.subheader("Upload Payroll Sample Files")
                 st.info("Upload sample files first to configure column mappings")
                 source_file_type = st.radio("Select source file type:", ["PA0008", "PA0014"], horizontal=True)
                 uploaded_sample = st.file_uploader(f"Upload {source_file_type} sample file", type=["csv", "xlsx"], key=f"{source_file_type}_upload")
@@ -222,4 +222,3 @@ def render_payroll_tool():
 
             with tabD:
                 render_column_mapping_interface()
-
