@@ -195,3 +195,10 @@ def process_uploaded_file(uploaded_file, delimiter: str = ",") -> Optional[pd.Da
         st.error(f"Error processing file: {e}")
         return None
 
+def render_column_mapping_interface(mode="foundation"):
+    st.write(f"🔄 Column Mapping Interface - Mode: {mode}")
+    st.info("Column mapping functionality coming soon.")
+
+def render_admin_config_manager():
+    st.write("🛠️ Admin Configuration Panel")
+    st.info("Admin config manager will be available here.")
