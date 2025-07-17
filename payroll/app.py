@@ -88,7 +88,6 @@ def show_dashboard(df):
     else:
         fig = px.bar(x=nulls.index, y=nulls.values, title="Nulls per Column", labels={'x': 'Column', 'y': 'Nulls'})
         st.plotly_chart(fig, use_container_width=True)
-
     st.markdown("**Value Distribution**")
     if pd.api.types.is_numeric_dtype(df[selected_col]):
         fig2 = px.histogram(df, x=selected_col, title=f"{selected_col} Distribution")
@@ -131,10 +130,17 @@ Answer this:
     return chain.run({"question": query, "context": context})
 
 def render_payroll_tool():
-    module_tabs = st.session_state.get("module_tabs", "Mapping & Cleansing")
+    st.title("🔍 Enhanced Payroll Mapping & Cleansing Tool")
 
-    if module_tabs == "Mapping & Cleansing":
-        st.title("🔍 Enhanced Payroll Mapping & Cleansing Tool")
+    view = st.radio("Select View Mode", ["Mapping & Cleansing", "Configuration Manager"], horizontal=True)
+
+    if view == "Mapping & Cleansing":
+        with st.sidebar:
+            st.header("Cleansing Options")
+            trim = st.checkbox("Trim Whitespace", True)
+            lower = st.checkbox("Lowercase", True)
+            empty_nan = st.checkbox("Empty → NaN", True)
+            drop_null = st.checkbox("Drop Null Rows", False)
 
         uploaded_0008 = st.file_uploader("Upload PA0008.xlsx", type=["xlsx"])
         uploaded_0014 = st.file_uploader("Upload PA0014.xlsx", type=["xlsx"])
@@ -190,9 +196,8 @@ def render_payroll_tool():
                 if query:
                     st.markdown("**Answer:**")
                     st.write(get_nlp_answer(query, df_8_clean))
-
-    elif module_tabs == "Configuration Manager":
-        st.title("🛠️ Payroll Data – Configuration Manager")
+    elif view == "Configuration Manager":
+        st.markdown("## 🛠️ Payroll Data – Configuration Manager")
         initialize_directories()
 
         tabA, tabB, tabC, tabD = st.tabs([
@@ -219,4 +224,3 @@ def render_payroll_tool():
 
         with tabD:
             render_column_mapping_interface()
-
