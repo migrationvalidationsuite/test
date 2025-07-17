@@ -2,11 +2,11 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-import sys
 import os
+import sys
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Optional: LLM support
 try:
     from langchain.llms import Ollama
     from langchain.chains import LLMChain
@@ -19,7 +19,7 @@ from config_manager import (
     initialize_directories,
     render_template_editor,
     manage_picklists,
-    render_column_mapping_interface,
+    # render_column_mapping_interface,  # ❌ Remove this if not defined
     get_source_columns,
     get_picklist_columns,
     load_config,
@@ -29,7 +29,10 @@ from config_manager import (
     process_uploaded_file
 )
 
-
+from foundation_module.foundation_app import render as render_foundation
+from employee_app import render_employee_tool
+from employeedata.app.data_migration_tool import render_employee_v2
+from payroll.app import render_payroll_tool
 
 
 @st.cache_data
