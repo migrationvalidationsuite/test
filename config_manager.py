@@ -1,331 +1,194 @@
+import os
+import json
 import streamlit as st
 import pandas as pd
-import json
-import os
-import io
 from datetime import datetime
 
-# Default templates (customize based on your needs)
+CONFIG_FILE = "config.json"
 DEFAULT_TEMPLATES = {
-    "payroll_template": {
-        "employee_id": "string",
-        "employee_name": "string",
-        "department": "string",
-        "base_salary": "number",
-        "overtime_hours": "number",
-        "gross_pay": "number",
-        "net_pay": "number"
+    "foundation_template": {
+        "name": {"type": "string", "source": "Object Name"},
+        "obj_id": {"type": "string", "source": "Object ID"},
+        "parent_id": {"type": "string", "source": "Parent Object ID"}
     },
-    "employee_template": {
-        "employee_id": "string",
-        "name": "string",
-        "email": "string",
-        "department": "string",
-        "hire_date": "date"
+    "payroll_template": {
+        "employee_id": {"type": "string", "source": "Pers.No."},
+        "wage_type": {"type": "string", "source": "Wage type"},
+        "amount": {"type": "number", "source": "Amount"},
+        "currency": {"type": "string", "source": "Crcy"},
+        "start_date": {"type": "date", "source": "Start Date"},
+        "end_date": {"type": "date", "source": "End Date"},
+        "assignment": {"type": "string", "source": "Assignment number"}
     }
 }
 
+# ✅ Fix 1: Add initialize_directories
 def initialize_directories():
-    """
-    Create necessary directories if they don't exist
-    """
-    directories = ['templates', 'data', 'config']
-    for directory in directories:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-            st.info(f"Created directory: {directory}")
-
+    os.makedirs("templates", exist_ok=True)
+    os.makedirs("data", exist_ok=True)
+    os.makedirs("picklists", exist_ok=True)
+# ✅ Load existing config or return default structure
 def load_config():
-    """Load configuration from file"""
-    config_file = "config.json"
-    if os.path.exists(config_file):
-        try:
-            with open(config_file, 'r') as f:
-                return json.load(f)
-        except (json.JSONDecodeError, IOError) as e:
-            st.error(f"Error loading configuration: {str(e)}")
-    
-    # Return default config if file doesn't exist or is corrupted
-    return {
-        "templates": DEFAULT_TEMPLATES,
-        "picklists": {},
-        "settings": {
-            "created_at": datetime.now().isoformat(),
-            "version": "1.0"
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, "r") as f:
+            return json.load(f)
+    else:
+        return {
+            "templates": DEFAULT_TEMPLATES,
+            "picklists": {},
+            "settings": {
+                "created_at": datetime.now().isoformat(),
+                "version": "1.0"
+            }
         }
-    }
 
-def save_config(config):
-    """Save configuration to file"""
-    config_file = "config.json"
+# ✅ Save config to disk
+def save_config(config_data):
     try:
-        with open(config_file, 'w') as f:
-            json.dump(config, f, indent=2)
+        with open(CONFIG_FILE, "w") as f:
+            json.dump(config_data, f, indent=4)
         return True
     except Exception as e:
-        st.error(f"Error saving configuration: {str(e)}")
+        st.error(f"Error saving config: {str(e)}")
         return False
 
-def process_uploaded_file(uploaded_file, file_type="excel"):
-    """
-    Process an uploaded file and return a DataFrame
-    """
-    try:
-        if file_type == "excel" or uploaded_file.name.endswith(('.xlsx', '.xls')):
-            df = pd.read_excel(uploaded_file)
-        elif file_type == "csv" or uploaded_file.name.endswith('.csv'):
-            df = pd.read_csv(uploaded_file)
-        else:
-            st.error(f"Unsupported file type: {uploaded_file.name}")
-            return None
-        
-        return df
-    except Exception as e:
-        st.error(f"Error processing file: {str(e)}")
-        return None
-
-def convert_template_to_text(template_dict):
-    """
-    Convert template dictionary to text format
-    """
-    if isinstance(template_dict, dict):
-        return json.dumps(template_dict, indent=2)
-    return str(template_dict)
-
-def get_source_columns(df):
-    """
-    Get list of source columns from DataFrame
-    """
-    if df is not None:
-        return df.columns.tolist()
-    return []
-
-def get_picklist_columns(config):
-    """
-    Get columns that have picklists defined
-    """
-    picklists = config.get('picklists', {})
-    return list(picklists.keys())
-
-def render_column_mapping_interface(uploaded_file, mode="default"):
-    """
-    Render the column mapping interface
-    """
-    st.subheader("Column Mapping")
-    
-    if uploaded_file is None:
-        st.warning("Please upload a file first")
-        return None
-    
-    # Process the uploaded file
-    df = process_uploaded_file(uploaded_file)
-    if df is None:
-        return None
-    
-    st.write("File preview:")
-    st.dataframe(df.head())
-    
-    # Get source columns
-    source_columns = get_source_columns(df)
-    
-    # Create mapping interface
-    mapping = {}
-    
-    # Common target columns (customize based on your needs)
-    target_columns = [
-        "employee_id", "employee_name", "department", "position", 
-        "base_salary", "overtime_hours", "overtime_rate", "deductions",
-        "gross_pay", "net_pay", "tax_withheld"
-    ]
-    
-    if mode == "payroll":
-        st.write("Map your file columns to payroll fields:")
-        for target_col in target_columns:
-            mapping[target_col] = st.selectbox(
-                f"Map '{target_col}' to:",
-                options=[""] + source_columns,
-                key=f"mapping_{target_col}"
-            )
-    else:
-        st.write("Column mapping:")
-        for i, source_col in enumerate(source_columns):
-            mapping[source_col] = st.text_input(
-                f"Map '{source_col}' to:",
-                value=source_col,
-                key=f"mapping_{i}"
-            )
-    
-    return mapping
-
-def render_template_editor():
-    """
-    Render the template editor interface
-    """
+# ✅ Fix 2: Accept template_type argument
+def render_template_editor(template_type=None):
     st.subheader("Template Editor")
-    
+
     config = load_config()
     templates = config.get('templates', DEFAULT_TEMPLATES)
-    
-    # Template selection
+    # Handle payroll-specific template auto-creation
+    if template_type == "payroll":
+        if "payroll_template" not in templates:
+            templates["payroll_template"] = {
+                "employee_id": {"type": "string", "source": "Pers.No."},
+                "wage_type": {"type": "string", "source": "Wage type"},
+                "amount": {"type": "number", "source": "Amount"},
+                "currency": {"type": "string", "source": "Crcy"},
+                "start_date": {"type": "date", "source": "Start Date"},
+                "end_date": {"type": "date", "source": "End Date"},
+                "assignment": {"type": "string", "source": "Assignment number"}
+            }
+            save_config(config)
+
     template_names = list(templates.keys())
     if not template_names:
         st.warning("No templates available")
         return
-    
+
     selected_template = st.selectbox("Select Template", template_names)
-    
+
     if selected_template:
-        # Edit template
-        template_content = templates[selected_template]
-        
-        # Convert to text for editing
-        template_text = convert_template_to_text(template_content)
-        
-        edited_template = st.text_area(
-            f"Edit {selected_template}",
-            value=template_text,
-            height=300
-        )
-        
-        if st.button("Save Template"):
-            try:
-                # Try to parse as JSON if it looks like JSON
-                if edited_template.strip().startswith('{'):
-                    parsed_template = json.loads(edited_template)
-                else:
-                    parsed_template = edited_template
-                
-                # Update config
-                config['templates'][selected_template] = parsed_template
-                save_config(config)
-                st.success(f"Template '{selected_template}' saved successfully")
-            except json.JSONDecodeError as e:
-                st.error(f"Invalid JSON format: {str(e)}")
+        try:
+            template_content = templates[selected_template]
 
-def manage_picklists():
-    """
-    Manage picklists for dropdowns and validation
-    """
-    st.subheader("Picklist Management")
-    
-    config = load_config()
-    picklists = config.get('picklists', {})
-    
-    # Create new picklist
-    st.write("Create New Picklist:")
-    new_picklist_name = st.text_input("Picklist Name")
-    new_picklist_values = st.text_area("Values (one per line)")
-    
-    if st.button("Create Picklist") and new_picklist_name:
-        values = [v.strip() for v in new_picklist_values.split('\n') if v.strip()]
-        picklists[new_picklist_name] = values
-        config['picklists'] = picklists
-        save_config(config)
-        st.success(f"Picklist '{new_picklist_name}' created")
-        st.rerun()
-    
-    # Edit existing picklists
-    if picklists:
-        st.write("Edit Existing Picklists:")
-        for name, values in picklists.items():
-            with st.expander(f"Edit {name}"):
-                edited_values = st.text_area(
-                    f"Values for {name}",
-                    value='\n'.join(values),
-                    key=f"picklist_{name}"
-                )
-                
-                col1, col2 = st.columns(2)
-                with col1:
-                    if st.button(f"Save {name}", key=f"save_{name}"):
-                        new_values = [v.strip() for v in edited_values.split('\n') if v.strip()]
-                        picklists[name] = new_values
-                        config['picklists'] = picklists
-                        save_config(config)
-                        st.success(f"Picklist '{name}' updated")
-                        st.rerun()
-                
-                with col2:
-                    if st.button(f"Delete {name}", key=f"delete_{name}"):
-                        del picklists[name]
-                        config['picklists'] = picklists
-                        save_config(config)
-                        st.success(f"Picklist '{name}' deleted")
-                        st.rerun()
-
-def show_admin_panel():
-    """
-    Show the admin panel for configuration management
-    """
-    st.header("Admin Panel")
-    
-    # Initialize directories
-    initialize_directories()
-    
-    # Load current configuration
-    config = load_config()
-    
-    # Create tabs for different admin functions
-    tab1, tab2, tab3, tab4 = st.tabs(["Templates", "Picklists", "Configuration", "System Info"])
-    
-    with tab1:
-        st.subheader("Template Management")
-        render_template_editor()
-    
-    with tab2:
-        st.subheader("Picklist Management")
-        manage_picklists()
-    
-    with tab3:
-        st.subheader("Configuration")
-        
-        # Display current config
-        st.write("Current Configuration:")
-        st.json(config)
-        
-        # Option to reset to defaults
-        if st.button("Reset to Default Configuration"):
-            default_config = {
-                "templates": DEFAULT_TEMPLATES,
-                "picklists": {},
-                "settings": {
-                    "created_at": datetime.now().isoformat(),
-                    "version": "1.0"
-                }
-            }
-            save_config(default_config)
-            st.success("Configuration reset to defaults")
-            st.rerun()
-    
-    with tab4:
-        st.subheader("System Information")
-        st.write("System Status:")
-        st.write(f"- Configuration file exists: {os.path.exists('config.json')}")
-        st.write(f"- Templates directory exists: {os.path.exists('templates')}")
-        st.write(f"- Data directory exists: {os.path.exists('data')}")
-        
-        # Show directory contents
-        if os.path.exists('templates'):
-            st.write("Template files:")
-            template_files = os.listdir('templates')
-            if template_files:
-                for file in template_files:
-                    st.write(f"  - {file}")
+            # Show as editable JSON string
+            if isinstance(template_content, dict):
+                template_text = json.dumps(template_content, indent=2)
             else:
-                st.write("  No template files found")
+                template_text = str(template_content)
 
-# Export list for module imports
-__all__ = [
-    "initialize_directories",
-    "render_template_editor",
-    "manage_picklists",
-    "render_column_mapping_interface",
-    "get_source_columns",
-    "get_picklist_columns",
-    "load_config",
-    "save_config",
-    "show_admin_panel",
-    "process_uploaded_file",
-    "convert_template_to_text",
-    "DEFAULT_TEMPLATES"
-]
+            edited_template = st.text_area(
+                f"Edit {selected_template}",
+                value=template_text,
+                height=300
+            )
+
+            col1, col2 = st.columns(2)
+            with col1:
+                if st.button("Save Template"):
+                    try:
+                        parsed_template = (
+                            json.loads(edited_template)
+                            if edited_template.strip().startswith("{")
+                            else edited_template
+                        )
+                        config['templates'][selected_template] = parsed_template
+                        if save_config(config):
+                            st.success(f"Template '{selected_template}' saved successfully")
+                        else:
+                            st.error("Failed to save template")
+                    except json.JSONDecodeError as e:
+                        st.error(f"Invalid JSON: {str(e)}")
+
+            with col2:
+                if st.button("Delete Template"):
+                    if selected_template in config['templates']:
+                        del config['templates'][selected_template]
+                        if save_config(config):
+                            st.success(f"Template '{selected_template}' deleted")
+                            st.rerun()
+                        else:
+                            st.error("Failed to delete template")
+        except Exception as e:
+            st.error(f"Error rendering template editor: {str(e)}")
+def manage_picklists():
+    st.subheader("Picklist Management")
+    os.makedirs(PICKLIST_DIR, exist_ok=True)
+
+    picklist_files = [f for f in os.listdir(PICKLIST_DIR) if f.endswith(".csv")]
+
+    selected_file = st.selectbox("Select a picklist to view/edit", picklist_files) if picklist_files else None
+
+    if selected_file:
+        filepath = os.path.join(PICKLIST_DIR, selected_file)
+        df = pd.read_csv(filepath)
+
+        st.dataframe(df)
+
+        st.download_button("Download Picklist", data=df.to_csv(index=False), file_name=selected_file)
+
+    uploaded = st.file_uploader("Upload a new picklist (CSV)", type=["csv"])
+    if uploaded:
+        with open(os.path.join(PICKLIST_DIR, uploaded.name), "wb") as f:
+            f.write(uploaded.read())
+        st.success(f"{uploaded.name} uploaded successfully")
+        st.rerun()
+
+
+def get_source_columns(file_path: str) -> List[str]:
+    try:
+        df = pd.read_csv(file_path, nrows=MAX_SAMPLE_ROWS)
+        return df.columns.tolist()
+    except Exception as e:
+        st.error(f"Error loading source columns: {str(e)}")
+        return []
+
+
+def get_picklist_columns(picklist_name: str) -> List[str]:
+    try:
+        path = os.path.join(PICKLIST_DIR, picklist_name)
+        df = pd.read_csv(path)
+        return df.columns.tolist()
+    except Exception as e:
+        st.error(f"Error loading picklist: {str(e)}")
+        return []
+
+
+def picklist_lookup(value, picklist_name, column):
+    try:
+        df = pd.read_csv(os.path.join(PICKLIST_DIR, picklist_name))
+        if column in df.columns and value in df[column].values:
+            return value
+        else:
+            return None
+    except Exception:
+        return None
+def process_uploaded_file(uploaded_file, delimiter: str = ",") -> Optional[pd.DataFrame]:
+    """
+    Reads a CSV or Excel file from Streamlit's uploader and returns a DataFrame.
+    Tries to auto-detect encoding and handles large files gracefully.
+    """
+    try:
+        if uploaded_file.name.endswith(".csv"):
+            return pd.read_csv(uploaded_file, delimiter=delimiter)
+        elif uploaded_file.name.endswith((".xls", ".xlsx")):
+            return pd.read_excel(uploaded_file)
+        else:
+            st.error("Unsupported file type")
+            return None
+    except Exception as e:
+        st.error(f"Error processing file: {e}")
+        return None
+
