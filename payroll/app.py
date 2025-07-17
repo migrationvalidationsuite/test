@@ -131,94 +131,92 @@ Answer this:
     return chain.run({"question": query, "context": context})
 
 def render_payroll_tool():
-    st.title("🔍 Enhanced Payroll Mapping & Cleansing Tool")
+    module_tabs = st.session_state.get("module_tabs", "Mapping & Cleansing")
 
-    with st.sidebar:
-        st.header("Cleansing Options")
-        trim = st.checkbox("Trim Whitespace", True)
-        lower = st.checkbox("Lowercase", True)
-        empty_nan = st.checkbox("Empty → NaN", True)
-        drop_null = st.checkbox("Drop Null Rows", False)
+    if module_tabs == "Mapping & Cleansing":
+        st.title("🔍 Enhanced Payroll Mapping & Cleansing Tool")
 
-    uploaded_0008 = st.file_uploader("Upload PA0008.xlsx", type=["xlsx"])
-    uploaded_0014 = st.file_uploader("Upload PA0014.xlsx", type=["xlsx"])
+        uploaded_0008 = st.file_uploader("Upload PA0008.xlsx", type=["xlsx"])
+        uploaded_0014 = st.file_uploader("Upload PA0014.xlsx", type=["xlsx"])
 
-    if uploaded_0008 and uploaded_0014:
-        df_8 = load_data(uploaded_0008)
-        df_14 = load_data(uploaded_0014)
+        if uploaded_0008 and uploaded_0014:
+            df_8 = load_data(uploaded_0008)
+            df_14 = load_data(uploaded_0014)
 
-        df_8_clean = cleanse_dataframe(df_8, trim, lower, empty_nan, drop_null)
-        df_14_clean = cleanse_dataframe(df_14, trim, lower, empty_nan, drop_null)
+            df_8_clean = cleanse_dataframe(df_8, trim, lower, empty_nan, drop_null)
+            df_14_clean = cleanse_dataframe(df_14, trim, lower, empty_nan, drop_null)
 
-        df_8_clean = standardize_dates(df_8_clean, ["Start date", "End Date"])
-        df_14_clean = standardize_dates(df_14_clean, ["Start date", "End Date"])
+            df_8_clean = standardize_dates(df_8_clean, ["Start date", "End Date"])
+            df_14_clean = standardize_dates(df_14_clean, ["Start date", "End Date"])
 
-        tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-            "Cleanse", "Metadata", "Validation", "Dashboard", "Stats", "Ask Your Data", "Admin"
-        ])
-
-        with tab1:
-            st.subheader("🩹 Cleanse & Compare")
-            col1, col2 = st.columns(2)
-            with col1:
-                st.write("PA0008 – Original")
-                st.dataframe(df_8)
-            with col2:
-                st.write("PA0008 – Cleansed")
-                st.dataframe(show_comparison(df_8, df_8_clean))
-
-            col3, col4 = st.columns(2)
-            with col3:
-                st.write("PA0014 – Original")
-                st.dataframe(df_14)
-            with col4:
-                st.write("PA0014 – Cleansed")
-                st.dataframe(show_comparison(df_14, df_14_clean))
-
-        with tab2:
-            display_metadata(df_8_clean, "PA0008")
-            display_metadata(df_14_clean, "PA0014")
-
-        with tab3:
-            show_validation(df_8_clean)
-
-        with tab4:
-            show_dashboard(df_8_clean)
-
-        with tab5:
-            descriptive_statistics(df_8_clean)
-
-        with tab6:
-            st.subheader("💬 Ask Your Data")
-            query = st.text_input("Ask a question:")
-            if query:
-                st.markdown("**Answer:**")
-                st.write(get_nlp_answer(query, df_8_clean))
-
-        with tab7:
-            st.subheader("🛠️ Admin – Payroll Configuration Manager")
-            initialize_directories()
-            tabA, tabB, tabC, tabD = st.tabs([
-                "📂 Source File Samples",
-                "📄 Destination Templates",
-                "💃 Picklist Management",
-                "🔄 Column Mapping"
+            tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+                "Cleanse", "Metadata", "Validation", "Dashboard", "Stats", "Ask Your Data"
             ])
 
-            with tabA:
-                st.subheader("Upload Payroll Sample Files")
-                st.info("Upload sample files first to configure column mappings")
-                source_file_type = st.radio("Select source file type:", ["PA0008", "PA0014"], horizontal=True)
-                uploaded_sample = st.file_uploader(f"Upload {source_file_type} sample file", type=["csv", "xlsx"], key=f"{source_file_type}_upload")
-                if uploaded_sample:
-                    process_uploaded_file(uploaded_sample, source_file_type)
+            with tab1:
+                st.subheader("🩹 Cleanse & Compare")
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.write("PA0008 – Original")
+                    st.dataframe(df_8)
+                with col2:
+                    st.write("PA0008 – Cleansed")
+                    st.dataframe(show_comparison(df_8, df_8_clean))
 
-            with tabB:
-                template_type = st.radio("Select template type:", ["PA0008", "PA0014"], horizontal=True, key="template_type_radio")
-                render_template_editor(template_type)
+                col3, col4 = st.columns(2)
+                with col3:
+                    st.write("PA0014 – Original")
+                    st.dataframe(df_14)
+                with col4:
+                    st.write("PA0014 – Cleansed")
+                    st.dataframe(show_comparison(df_14, df_14_clean))
 
-            with tabC:
-                manage_picklists()
+            with tab2:
+                display_metadata(df_8_clean, "PA0008")
+                display_metadata(df_14_clean, "PA0014")
 
-            with tabD:
-                render_column_mapping_interface()
+            with tab3:
+                show_validation(df_8_clean)
+
+            with tab4:
+                show_dashboard(df_8_clean)
+
+            with tab5:
+                descriptive_statistics(df_8_clean)
+
+            with tab6:
+                st.subheader("💬 Ask Your Data")
+                query = st.text_input("Ask a question:")
+                if query:
+                    st.markdown("**Answer:**")
+                    st.write(get_nlp_answer(query, df_8_clean))
+
+    elif module_tabs == "Configuration Manager":
+        st.title("🛠️ Payroll Data – Configuration Manager")
+        initialize_directories()
+
+        tabA, tabB, tabC, tabD = st.tabs([
+            "📂 Source File Samples",
+            "📄 Destination Templates",
+            "🗃️ Picklist Management",
+            "🔄 Column Mapping"
+        ])
+
+        with tabA:
+            st.subheader("Upload Payroll Sample Files")
+            st.info("Upload sample files first to configure column mappings")
+            source_file_type = st.radio("Select source file type:", ["PA0008", "PA0014"], horizontal=True)
+            uploaded_sample = st.file_uploader(f"Upload {source_file_type} sample file", type=["csv", "xlsx"], key=f"{source_file_type}_upload")
+            if uploaded_sample:
+                process_uploaded_file(uploaded_sample, source_file_type)
+
+        with tabB:
+            template_type = st.radio("Select template type:", ["PA0008", "PA0014"], horizontal=True, key="template_type_radio")
+            render_template_editor(template_type)
+
+        with tabC:
+            manage_picklists()
+
+        with tabD:
+            render_column_mapping_interface()
+
