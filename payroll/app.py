@@ -140,19 +140,19 @@ def render_payroll_tool():
         "Select View Mode", 
         ["Mapping & Cleansing", "Configuration Manager"], 
         horizontal=True,
-        key="payroll_view_mode"  # Add this unique key
+        key="payroll_view_mode"
     )
 
     if view == "Mapping & Cleansing":
         with st.sidebar:
             st.header("Cleansing Options")
-            trim = st.checkbox("Trim Whitespace", True)
-            lower = st.checkbox("Lowercase", True)
-            empty_nan = st.checkbox("Empty → NaN", True)
-            drop_null = st.checkbox("Drop Null Rows", False)
+            trim = st.checkbox("Trim Whitespace", True, key="trim_checkbox")
+            lower = st.checkbox("Lowercase", True, key="lower_checkbox")
+            empty_nan = st.checkbox("Empty → NaN", True, key="empty_nan_checkbox")
+            drop_null = st.checkbox("Drop Null Rows", False, key="drop_null_checkbox")
 
-        uploaded_0008 = st.file_uploader("Upload PA0008.xlsx", type=["xlsx"])
-        uploaded_0014 = st.file_uploader("Upload PA0014.xlsx", type=["xlsx"])
+        uploaded_0008 = st.file_uploader("Upload PA0008.xlsx", type=["xlsx"], key="payroll_0008_upload")
+        uploaded_0014 = st.file_uploader("Upload PA0014.xlsx", type=["xlsx"], key="payroll_0014_upload")
 
         if uploaded_0008 and uploaded_0014:
             df_8 = load_data(uploaded_0008)
@@ -166,8 +166,8 @@ def render_payroll_tool():
 
             tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
                 "Cleanse", "Metadata", "Validation", "Dashboard", "Stats", "Ask Your Data"
-            ])
-
+            ], key="payroll_tabs")
+            
             with tab1:
                 st.subheader("🩹 Cleanse & Compare")
                 col1, col2 = st.columns(2)
@@ -201,7 +201,7 @@ def render_payroll_tool():
 
             with tab6:
                 st.subheader("💬 Ask Your Data")
-                query = st.text_input("Ask a question:")
+                query = st.text_input("Ask a question:", key="nlp_query_input")
                 if query:
                     st.markdown("**Answer:**")
                     st.write(get_nlp_answer(query, df_8_clean))
@@ -215,18 +215,32 @@ def render_payroll_tool():
             "📄 Destination Templates",
             "🗃️ Picklist Management",
             "🔄 Column Mapping"
-        ])
+        ], key="config_manager_tabs")
 
         with tabA:
             st.subheader("Upload Payroll Sample Files")
             st.info("Upload sample files first to configure column mappings")
-            source_file_type = st.radio("Select source file type:", ["PA0008", "PA0014"], horizontal=True)
-            uploaded_sample = st.file_uploader(f"Upload {source_file_type} sample file", type=["csv", "xlsx"], key=f"{source_file_type}_upload")
+            source_file_type = st.radio(
+                "Select source file type:", 
+                ["PA0008", "PA0014"], 
+                horizontal=True,
+                key="payroll_source_type"
+            )
+            uploaded_sample = st.file_uploader(
+                f"Upload {source_file_type} sample file", 
+                type=["csv", "xlsx"], 
+                key=f"{source_file_type}_upload_sample"
+            )
             if uploaded_sample:
                 process_uploaded_file(uploaded_sample, source_file_type)
 
         with tabB:
-            template_type = st.radio("Select template type:", ["PA0008", "PA0014"], horizontal=True, key="template_type_radio")
+            template_type = st.radio(
+                "Select template type:", 
+                ["PA0008", "PA0014"], 
+                horizontal=True, 
+                key="payroll_template_type"
+            )
             render_template_editor(template_type)
 
         with tabC:
