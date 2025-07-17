@@ -97,7 +97,131 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-def render_template_editor(template_type=template_type):
+
+
+def show_admin_panel():
+    """
+    Show the admin panel for configuration management
+    """
+    st.header("Admin Panel")
+    
+    # Initialize directories
+    initialize_directories()
+    
+    # Load current configuration
+    config = load_config()
+    
+    # Create tabs for different admin functions
+    tab1, tab2, tab3, tab4 = st.tabs(["Templates", "Picklists", "Configuration", "System Info"])
+    
+    with tab1:
+        st.subheader("Template Management")
+        render_template_editor()
+    
+    with tab2:
+        st.subheader("Picklist Management")
+        manage_picklists()
+    
+    with tab3:
+        st.subheader("Configuration")
+        
+        # Display current config
+        st.write("Current Configuration:")
+        st.json(config)
+        
+        # Option to reset to defaults
+        if st.button("Reset to Default Configuration"):
+            default_config = {
+                "templates": DEFAULT_TEMPLATES,
+                "picklists": {},
+                "settings": {
+                    "created_at": datetime.now().isoformat(),
+                    "version": "1.0"
+                }
+            }
+            save_config(default_config)
+            st.success("Configuration reset to defaults")
+            st.rerun()
+    
+    with tab4:
+        st.subheader("System Information")
+        st.write("System Status:")
+        st.write(f"- Configuration file exists: {os.path.exists('config.json')}")
+        st.write(f"- Templates directory exists: {os.path.exists('templates')}")
+        st.write(f"- Data directory exists: {os.path.exists('data')}")
+        
+        # Show directory contents
+        if os.path.exists('templates'):
+            st.write("Template files:")
+            for file in os.listdir('templates'):
+                st.write(f"  - {file}")
+
+
+
+
+
+# ✅ Background image setup
+def set_background(image_file):
+    with open(image_file, "rb") as f:
+        data = base64.b64encode(f.read()).decode()
+    st.markdown(f"""
+        <style>
+            .stApp {{
+                background: linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.85)),
+                            url("data:image/jpeg;base64,{data}");
+                background-size: cover;
+                background-attachment: fixed;
+                background-position: center;
+            }}
+        </style>
+    """, unsafe_allow_html=True)
+
+set_background("pexels-googledeepmind-17483873.jpg")
+
+# ✅ Session state
+if "selected" not in st.session_state:
+    st.session_state.selected = "Home"
+if "demo_page" not in st.session_state:
+    st.session_state.demo_page = "main"
+
+# ✅ Sidebar navigation
+with st.sidebar:
+    selected = option_menu(
+        menu_title="Navigation",
+        options=["Home", "Solutions", "Launch Demo"],
+        icons=["house", "layers", "rocket"],
+        default_index=0,
+        styles={
+            "container": {"padding": "5px", "background-color": "#f8f9fa"},
+            "icon": {"color": "#003366", "font-size": "18px"},
+            "nav-link": {
+                "font-size": "16px",
+                "text-align": "left",
+                "margin": "5px",
+                "--hover-color": "#e6f0ff",
+            },
+            "nav-link-selected": {"background-color": "#cfe2ff", "font-weight": "bold"},
+        },
+    )
+    st.session_state.selected = selected
+
+# ✅ Remove top white space
+st.markdown("""
+<style>
+    .block-container {
+        padding-top: 0.5rem !important;
+    }
+    @media (max-width: 768px) {
+        .block-container {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+    }
+</style>
+""", unsafe_allow_html=True)
+
+
+def render_template_editor(template_type=None):
     """
     Render the template editor interface with payroll-specific handling
     """
@@ -178,125 +302,6 @@ def render_template_editor(template_type=template_type):
         except Exception as e:
             st.error(f"Error rendering template editor: {str(e)}")
             st.error("Please check the template format in your configuration")
-
-def show_admin_panel():
-    """
-    Show the admin panel for configuration management
-    """
-    st.header("Admin Panel")
-    
-    # Initialize directories
-    initialize_directories()
-    
-    # Load current configuration
-    config = load_config()
-    
-    # Create tabs for different admin functions
-    tab1, tab2, tab3, tab4 = st.tabs(["Templates", "Picklists", "Configuration", "System Info"])
-    
-    with tab1:
-        st.subheader("Template Management")
-        render_template_editor()
-    
-    with tab2:
-        st.subheader("Picklist Management")
-        manage_picklists()
-    
-    with tab3:
-        st.subheader("Configuration")
-        
-        # Display current config
-        st.write("Current Configuration:")
-        st.json(config)
-        
-        # Option to reset to defaults
-        if st.button("Reset to Default Configuration"):
-            default_config = {
-                "templates": DEFAULT_TEMPLATES,
-                "picklists": {},
-                "settings": {
-                    "created_at": datetime.now().isoformat(),
-                    "version": "1.0"
-                }
-            }
-            save_config(default_config)
-            st.success("Configuration reset to defaults")
-            st.rerun()
-    
-    with tab4:
-        st.subheader("System Information")
-        st.write("System Status:")
-        st.write(f"- Configuration file exists: {os.path.exists('config.json')}")
-        st.write(f"- Templates directory exists: {os.path.exists('templates')}")
-        st.write(f"- Data directory exists: {os.path.exists('data')}")
-        
-        # Show directory contents
-        if os.path.exists('templates'):
-            st.write("Template files:")
-            for file in os.listdir('templates'):
-                st.write(f"  - {file}")
-
-
-# ✅ Background image setup
-def set_background(image_file):
-    with open(image_file, "rb") as f:
-        data = base64.b64encode(f.read()).decode()
-    st.markdown(f"""
-        <style>
-            .stApp {{
-                background: linear-gradient(rgba(255,255,255,0.85), rgba(255,255,255,0.85)),
-                            url("data:image/jpeg;base64,{data}");
-                background-size: cover;
-                background-attachment: fixed;
-                background-position: center;
-            }}
-        </style>
-    """, unsafe_allow_html=True)
-
-set_background("pexels-googledeepmind-17483873.jpg")
-
-# ✅ Session state
-if "selected" not in st.session_state:
-    st.session_state.selected = "Home"
-if "demo_page" not in st.session_state:
-    st.session_state.demo_page = "main"
-
-# ✅ Sidebar navigation
-with st.sidebar:
-    selected = option_menu(
-        menu_title="Navigation",
-        options=["Home", "Solutions", "Launch Demo"],
-        icons=["house", "layers", "rocket"],
-        default_index=0,
-        styles={
-            "container": {"padding": "5px", "background-color": "#f8f9fa"},
-            "icon": {"color": "#003366", "font-size": "18px"},
-            "nav-link": {
-                "font-size": "16px",
-                "text-align": "left",
-                "margin": "5px",
-                "--hover-color": "#e6f0ff",
-            },
-            "nav-link-selected": {"background-color": "#cfe2ff", "font-weight": "bold"},
-        },
-    )
-    st.session_state.selected = selected
-
-# ✅ Remove top white space
-st.markdown("""
-<style>
-    .block-container {
-        padding-top: 0.5rem !important;
-    }
-    @media (max-width: 768px) {
-        .block-container {
-            padding-left: 1rem;
-            padding-right: 1rem;
-        }
-    }
-</style>
-""", unsafe_allow_html=True)
-
 
 # -------------------- HOME --------------------
 if selected == "Home":
