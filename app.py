@@ -6,6 +6,8 @@ from foundation_module.foundation_app import render as render_foundation
 from payroll import app as payroll_app
 from employee_app import render_employee_tool
 from employeedata.app.data_migration_tool import render_employee_v2
+from config_manager import show_admin_panel
+
 # Hide Streamlit style (footer and hamburger menu)
 # 🔒 Hide Streamlit footer, menu, and header for a cleaner look
 st.markdown("""
@@ -318,6 +320,10 @@ elif selected == "Launch Demo":
                     st.markdown(detail_text)
         migration_row("Foundation Data", "fd_demo", "- Legal Entity\n- Job Classification\n- Location\n- Org Units\n...", next_page="foundation_data_view")
 
+        # ✅ New: Foundation Data V2
+        migration_row("Foundation Data V2", "fd_demo_v2", "- New config-based editor\n- Picklists, templates, mappings\n...", next_page="foundation_data_v2")
+
+
         # Time Data — grayed out and disabled
         col1, col2 = st.columns([5, 3.8])
         with col1:
@@ -377,6 +383,17 @@ elif selected == "Launch Demo":
 
         st.markdown("### Employee Data V2 – Interactive Migration Tool")
         render_employee_v2()
+
+    elif st.session_state.demo_page == "foundation_data_v2":
+        back_col, _ = st.columns([1, 5])
+        with back_col:
+            if st.button("⬅ Back to Demo", key="back_from_foundation_v2", use_container_width=True):
+                st.session_state.demo_page = "sap_to_sf"
+                st.rerun()
+
+        st.markdown("### Foundation Data V2 – Configuration Manager")
+        show_admin_panel()
+
 
 
 # -------------------- SOLUTIONS --------------------
