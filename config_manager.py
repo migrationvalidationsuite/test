@@ -127,62 +127,64 @@ def render_template_editor(template_type=None):
         except Exception as e:
             st.error(f"Error rendering template editor: {str(e)}")
 
+# Replace the ENTIRE existing show_admin_panel() function with:
 def show_admin_panel():
-    """
-    Show the admin panel for configuration management
-    """
-    st.header("Admin Panel")
-    
-    # Initialize directories
+    """Improved Foundation Data admin panel"""
+    st.title("🛠️ Foundation Data Configuration")
     initialize_directories()
-    
-    # Load current configuration
-    config = load_config()
-    
-    # Create tabs for different admin functions
-    tab1, tab2, tab3, tab4 = st.tabs(["Templates", "Picklists", "Configuration", "System Info"])
-    
-    with tab1:
-        st.subheader("Template Management")
-        render_template_editor()
-    
-    with tab2:
-        st.subheader("Picklist Management")
+
+    # Sidebar navigation
+    with st.sidebar:
+        st.subheader("Navigation")
+        section = st.radio(
+            "Configuration Sections",
+            ["Source Samples", "Templates", "Picklists", "Mappings", "System Info"],
+            key="foundation_nav"
+        )
+
+    # Main content
+    if section == "Source Samples":
+        st.subheader("📂 Source File Samples")
+        source_type = st.radio(
+            "Source Type:", 
+            ["HRP1000", "HRP1001"],
+            horizontal=True,
+            key="foundation_source_type"
+        )
+        uploaded_file = st.file_uploader(
+            f"Upload {source_type} sample",
+            type=["csv", "xlsx"],
+            key=f"foundation_{source_type}_upload"
+        )
+        if uploaded_file:
+            process_uploaded_file(uploaded_file, source_type)
+
+    elif section == "Templates":
+        st.subheader("📄 Template Editor")
+        template_type = st.radio(
+            "Template Type:",
+            ["Level", "Association"],
+            horizontal=True,
+            key="foundation_template_type"
+        )
+        render_template_editor(template_type)
+
+    elif section == "Picklists":
+        st.subheader("🗃️ Picklist Management")
         manage_picklists()
-    
-    with tab3:
-        st.subheader("Configuration")
-        
-        # Display current config
-        st.write("Current Configuration:")
-        st.json(config)
-        
-        # Option to reset to defaults
-        if st.button("Reset to Default Configuration"):
-            default_config = {
-                "templates": DEFAULT_TEMPLATES,
-                "picklists": {},
-                "settings": {
-                    "created_at": datetime.now().isoformat(),
-                    "version": "1.0"
-                }
-            }
-            save_config(default_config)
-            st.success("Configuration reset to defaults")
-            st.rerun()
-    
-    with tab4:
-        st.subheader("System Information")
+
+    elif section == "Mappings":
+        st.subheader("🔄 Column Mapping")
+        render_column_mapping_interface(mode="foundation")
+
+    elif section == "System Info":
+        st.subheader("⚙️ System Information")
+        config = load_config()
+        st.json(config["settings"])
         st.write("System Status:")
-        st.write(f"- Configuration file exists: {os.path.exists('config.json')}")
-        st.write(f"- Templates directory exists: {os.path.exists('templates')}")
-        st.write(f"- Data directory exists: {os.path.exists('data')}")
-        
-        # Show directory contents
-        if os.path.exists('templates'):
-            st.write("Template files:")
-            for file in os.listdir('templates'):
-                st.write(f"  - {file}")
+        st.write(f"- Config file: {os.path.exists('config.json')}")
+        st.write(f"- Templates dir: {os.path.exists('templates')}")
+        st.write(f"- Data dir: {os.path.exists('data')}")
 # ✅ Define constants
 PICKLIST_DIR = "picklists"
 MAX_SAMPLE_ROWS = 100
