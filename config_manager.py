@@ -5,7 +5,66 @@ import os
 import io
 from datetime import datetime
 
-# Add these missing functions to your config_manager.py file:
+# Default templates (customize based on your needs)
+DEFAULT_TEMPLATES = {
+    "payroll_template": {
+        "employee_id": "string",
+        "employee_name": "string",
+        "department": "string",
+        "base_salary": "number",
+        "overtime_hours": "number",
+        "gross_pay": "number",
+        "net_pay": "number"
+    },
+    "employee_template": {
+        "employee_id": "string",
+        "name": "string",
+        "email": "string",
+        "department": "string",
+        "hire_date": "date"
+    }
+}
+
+def initialize_directories():
+    """
+    Create necessary directories if they don't exist
+    """
+    directories = ['templates', 'data', 'config']
+    for directory in directories:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+            st.info(f"Created directory: {directory}")
+
+def load_config():
+    """Load configuration from file"""
+    config_file = "config.json"
+    if os.path.exists(config_file):
+        try:
+            with open(config_file, 'r') as f:
+                return json.load(f)
+        except (json.JSONDecodeError, IOError) as e:
+            st.error(f"Error loading configuration: {str(e)}")
+    
+    # Return default config if file doesn't exist or is corrupted
+    return {
+        "templates": DEFAULT_TEMPLATES,
+        "picklists": {},
+        "settings": {
+            "created_at": datetime.now().isoformat(),
+            "version": "1.0"
+        }
+    }
+
+def save_config(config):
+    """Save configuration to file"""
+    config_file = "config.json"
+    try:
+        with open(config_file, 'w') as f:
+            json.dump(config, f, indent=2)
+        return True
+    except Exception as e:
+        st.error(f"Error saving configuration: {str(e)}")
+        return False
 
 def process_uploaded_file(uploaded_file, file_type="excel"):
     """
@@ -98,73 +157,6 @@ def render_column_mapping_interface(uploaded_file, mode="default"):
     
     return mapping
 
-def show_admin_panel():
-    """
-    Show the admin panel for configuration management
-    """
-    st.header("Admin Panel")
-    
-    # Initialize directories
-    initialize_directories()
-    
-    # Load current configuration
-    config = load_config()
-    
-    # Create tabs for different admin functions
-    tab1, tab2, tab3, tab4 = st.tabs(["Templates", "Picklists", "Configuration", "System Info"])
-    
-    with tab1:
-        st.subheader("Template Management")
-        render_template_editor()
-    
-    with tab2:
-        st.subheader("Picklist Management")
-        manage_picklists()
-    
-    with tab3:
-        st.subheader("Configuration")
-        
-        # Display current config
-        st.write("Current Configuration:")
-        st.json(config)
-        
-        # Option to reset to defaults
-        if st.button("Reset to Default Configuration"):
-            default_config = {
-                "templates": DEFAULT_TEMPLATES,
-                "picklists": {},
-                "settings": {
-                    "created_at": datetime.now().isoformat(),
-                    "version": "1.0"
-                }
-            }
-            save_config(default_config)
-            st.success("Configuration reset to defaults")
-            st.rerun()
-    
-    with tab4:
-        st.subheader("System Information")
-        st.write("System Status:")
-        st.write(f"- Configuration file exists: {os.path.exists('config.json')}")
-        st.write(f"- Templates directory exists: {os.path.exists('templates')}")
-        st.write(f"- Data directory exists: {os.path.exists('data')}")
-        
-        # Show directory contents
-        if os.path.exists('templates'):
-            st.write("Template files:")
-            for file in os.listdir('templates'):
-                st.write(f"  - {file}")
-
-def initialize_directories():
-    """
-    Create necessary directories if they don't exist
-    """
-    directories = ['templates', 'data', 'config']
-    for directory in directories:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-            st.info(f"Created directory: {directory}")
-
 def render_template_editor():
     """
     Render the template editor interface
@@ -176,6 +168,10 @@ def render_template_editor():
     
     # Template selection
     template_names = list(templates.keys())
+    if not template_names:
+        st.warning("No templates available")
+        return
+    
     selected_template = st.selectbox("Select Template", template_names)
     
     if selected_template:
@@ -257,58 +253,68 @@ def manage_picklists():
                         st.success(f"Picklist '{name}' deleted")
                         st.rerun()
 
-# Make sure you also have these essential functions in your config_manager.py:
-
-def load_config():
-    """Load configuration from file"""
-    config_file = "config.json"
-    if os.path.exists(config_file):
-        try:
-            with open(config_file, 'r') as f:
-                return json.load(f)
-        except:
-            pass
+def show_admin_panel():
+    """
+    Show the admin panel for configuration management
+    """
+    st.header("Admin Panel")
     
-    # Return default config if file doesn't exist or is corrupted
-    return {
-        "templates": DEFAULT_TEMPLATES,
-        "picklists": {},
-        "settings": {
-            "created_at": datetime.now().isoformat(),
-            "version": "1.0"
-        }
-    }
+    # Initialize directories
+    initialize_directories()
+    
+    # Load current configuration
+    config = load_config()
+    
+    # Create tabs for different admin functions
+    tab1, tab2, tab3, tab4 = st.tabs(["Templates", "Picklists", "Configuration", "System Info"])
+    
+    with tab1:
+        st.subheader("Template Management")
+        render_template_editor()
+    
+    with tab2:
+        st.subheader("Picklist Management")
+        manage_picklists()
+    
+    with tab3:
+        st.subheader("Configuration")
+        
+        # Display current config
+        st.write("Current Configuration:")
+        st.json(config)
+        
+        # Option to reset to defaults
+        if st.button("Reset to Default Configuration"):
+            default_config = {
+                "templates": DEFAULT_TEMPLATES,
+                "picklists": {},
+                "settings": {
+                    "created_at": datetime.now().isoformat(),
+                    "version": "1.0"
+                }
+            }
+            save_config(default_config)
+            st.success("Configuration reset to defaults")
+            st.rerun()
+    
+    with tab4:
+        st.subheader("System Information")
+        st.write("System Status:")
+        st.write(f"- Configuration file exists: {os.path.exists('config.json')}")
+        st.write(f"- Templates directory exists: {os.path.exists('templates')}")
+        st.write(f"- Data directory exists: {os.path.exists('data')}")
+        
+        # Show directory contents
+        if os.path.exists('templates'):
+            st.write("Template files:")
+            template_files = os.listdir('templates')
+            if template_files:
+                for file in template_files:
+                    st.write(f"  - {file}")
+            else:
+                st.write("  No template files found")
 
-def save_config(config):
-    """Save configuration to file"""
-    config_file = "config.json"
-    try:
-        with open(config_file, 'w') as f:
-            json.dump(config, f, indent=2)
-        return True
-    except Exception as e:
-        st.error(f"Error saving configuration: {str(e)}")
-        return False
-
-# Default templates (customize based on your needs)
-DEFAULT_TEMPLATES = {
-    "payroll_template": {
-        "employee_id": "string",
-        "employee_name": "string",
-        "department": "string",
-        "base_salary": "number",
-        "overtime_hours": "number",
-        "gross_pay": "number",
-        "net_pay": "number"
-    },
-    "employee_template": {
-        "employee_id": "string",
-        "name": "string",
-        "email": "string",
-        "department": "string",
-        "hire_date": "date"
-    }
-}
+# Export list for module imports
 __all__ = [
     "initialize_directories",
     "render_template_editor",
@@ -317,8 +323,9 @@ __all__ = [
     "get_source_columns",
     "get_picklist_columns",
     "load_config",
-    "DEFAULT_TEMPLATES",
     "save_config",
     "show_admin_panel",
-    "process_uploaded_file"
+    "process_uploaded_file",
+    "convert_template_to_text",
+    "DEFAULT_TEMPLATES"
 ]
