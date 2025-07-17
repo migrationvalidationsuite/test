@@ -144,55 +144,64 @@ def render_payroll_tool():
     )
 
     if view == "Mapping & Cleansing":
-        # [Keep all your existing cleansing logic]
-        pass
-        
+        with st.sidebar:
+            st.header("Cleansing Options")
+            trim = st.checkbox("Trim Whitespace", True, key="trim_checkbox")
+            lower = st.checkbox("Lowercase", True, key="lower_checkbox")
+            empty_nan = st.checkbox("Empty → NaN", True, key="empty_nan_checkbox")
+            drop_null = st.checkbox("Drop Null Rows", False, key="drop_null_checkbox")
+
+        uploaded_0008 = st.file_uploader("Upload PA0008.xlsx", type=["xlsx"], key="payroll_0008_upload")
+        uploaded_0014 = st.file_uploader("Upload PA0014.xlsx", type=["xlsx"], key="payroll_0014_upload")
+
+        if uploaded_0008 and uploaded_0014:
+            # [Keep all your existing processing logic]
+            pass
+
     elif view == "Configuration Manager":
         st.markdown("## 🛠️ Payroll Data – Configuration Manager")
         initialize_directories()
 
-        # Use columns for better layout
-        col1, col2 = st.columns([1, 3])
-        
-        with col1:
+        # Sidebar navigation
+        with st.sidebar:
             st.subheader("Configuration Sections")
             config_section = st.radio(
                 "Select Section:",
                 ["Source Files", "Templates", "Picklists", "Mappings"],
                 key="payroll_config_section"
             )
-        
-        with col2:
-            if config_section == "Source Files":
-                st.subheader("📂 Upload Source Files")
-                source_type = st.radio(
-                    "File Type:",
-                    ["PA0008", "PA0014"],
-                    horizontal=True,
-                    key="payroll_source_type"
-                )
-                uploaded_file = st.file_uploader(
-                    f"Upload {source_type} sample",
-                    type=["csv", "xlsx"],
-                    key=f"payroll_{source_type}_upload"
-                )
-                if uploaded_file:
-                    process_uploaded_file(uploaded_file, source_type)
-                
-            elif config_section == "Templates":
-                st.subheader("📄 Template Configuration")
-                template_type = st.radio(
-                    "Template Type:",
-                    ["PA0008", "PA0014"],
-                    horizontal=True,
-                    key="payroll_template_type"
-                )
-                render_template_editor(template_type)
-                
-            elif config_section == "Picklists":
-                st.subheader("🗃️ Picklist Management")
-                manage_picklists()
-                
-            elif config_section == "Mappings":
-                st.subheader("🔄 Column Mapping")
-                render_column_mapping_interface(mode="payroll")
+
+        # Main content
+        if config_section == "Source Files":
+            st.subheader("📂 Upload Source Files")
+            source_type = st.radio(
+                "File Type:",
+                ["PA0008", "PA0014"],
+                horizontal=True,
+                key="payroll_source_type"
+            )
+            uploaded_file = st.file_uploader(
+                f"Upload {source_type} sample",
+                type=["csv", "xlsx"],
+                key=f"payroll_{source_type}_upload"
+            )
+            if uploaded_file:
+                process_uploaded_file(uploaded_file, source_type)
+
+        elif config_section == "Templates":
+            st.subheader("📄 Template Configuration")
+            template_type = st.radio(
+                "Template Type:",
+                ["PA0008", "PA0014"],
+                horizontal=True,
+                key="payroll_template_type"
+            )
+            render_template_editor(template_type)
+
+        elif config_section == "Picklists":
+            st.subheader("🗃️ Picklist Management")
+            manage_picklists()
+
+        elif config_section == "Mappings":
+            st.subheader("🔄 Column Mapping")
+            render_column_mapping_interface(mode="payroll")
