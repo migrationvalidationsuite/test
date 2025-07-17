@@ -1,0 +1,13 @@
+streamlit
+pandas
+numpy
+matplotlib
+plotly
+openpyxl
+streamlit-option-menu
+networkx
+regex
+scikit-learn
+matplotlib
+chardet
+
