@@ -19,14 +19,14 @@ from config_manager import (
     initialize_directories,
     render_template_editor,
     manage_picklists,
-    render_column_mapping_interface,
+    load_config,
     get_source_columns,
     get_picklist_columns,
-    load_config,
     DEFAULT_TEMPLATES,
     save_config,
-    render_admin_config_manager
+    render_admin_config_manager  # ✅ Updated from show_admin_panel
 )
+
 
 
 from foundation_module.foundation_app import render as render_foundation
