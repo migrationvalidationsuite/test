@@ -3,6 +3,21 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 
+from config_manager import (
+    initialize_directories,
+    load_config,
+    save_config,
+    get_picklist_columns,
+    get_source_columns,
+    convert_text_to_template,
+    convert_template_to_text,
+    render_template_editor,
+    manage_picklists,
+    render_column_mapping_interface,
+    validate_sample_columns,
+    process_uploaded_file
+)
+
 # Optional: LLM support
 try:
     from langchain.llms import Ollama
@@ -138,8 +153,8 @@ def render_payroll_tool():
         df_8_clean = standardize_dates(df_8_clean, ["Start date", "End Date"])
         df_14_clean = standardize_dates(df_14_clean, ["Start date", "End Date"])
 
-        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-            "Cleanse", "Metadata", "Validation", "Dashboard", "Stats", "Ask Your Data"
+        tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+            "Cleanse", "Metadata", "Validation", "Dashboard", "Stats", "Ask Your Data", "Admin"
         ])
 
         with tab1:
@@ -179,3 +194,32 @@ def render_payroll_tool():
             if query:
                 st.markdown("**Answer:**")
                 st.write(get_nlp_answer(query, df_8_clean))
+
+        with tab7:
+            st.subheader("🛠️ Admin – Payroll Configuration Manager")
+            initialize_directories()
+            tabA, tabB, tabC, tabD = st.tabs([
+                "📂 Source File Samples",
+                "📄 Destination Templates",
+                "🗃️ Picklist Management",
+                "🔄 Column Mapping"
+            ])
+
+            with tabA:
+                st.subheader("Upload Source File Samples")
+                st.info("Upload sample files first to configure column mappings")
+                source_file_type = st.radio("Select source file type:", ["PA0008", "PA0014"], horizontal=True)
+                uploaded_sample = st.file_uploader(f"Upload {source_file_type} sample file", type=["csv", "xlsx"], key=f"{source_file_type}_upload")
+                if uploaded_sample:
+                    process_uploaded_file(uploaded_sample, source_file_type)
+
+            with tabB:
+                template_type = st.radio("Select template type:", ["PA0008", "PA0014"], horizontal=True, key="template_type_radio")
+                render_template_editor(template_type)
+
+            with tabC:
+                manage_picklists()
+
+            with tabD:
+                render_column_mapping_interface()
+
