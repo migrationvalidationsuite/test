@@ -8,7 +8,7 @@ from employee_app import render_employee_tool
 from employeedata.app.data_migration_tool import render_employee_v2
 #from payroll.app import render_payroll_tool
 import payroll.app as payroll_app
-
+from config_manager import show_admin_panel  # Add this at top with other imports
 
 
 
