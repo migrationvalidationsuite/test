@@ -46,6 +46,7 @@ PYTHON_TRANSFORMATION_GUIDE = """
 
 # Default templates with descriptions
 DEFAULT_TEMPLATES = {
+    # Foundation Data
     "level": [
         {"target_column1": "effectiveStartDate", "target_column2": "Start Date", "description": "Effective start date of the level"},
         {"target_column1": "externalCode", "target_column2": "Code", "description": "Unique identifier for the level"},
@@ -58,6 +59,19 @@ DEFAULT_TEMPLATES = {
         {"target_column1": "externalCode", "target_column2": "Code", "description": "Unique identifier for the association"},
         {"target_column1": "effectiveStartDate", "target_column2": "Start Date", "description": "Effective start date"},
         {"target_column1": "cust_toLegalEntity.externalCode", "target_column2": "Business Unit.Company", "description": "Legal entity reference"}
+    ],
+    # Payroll Data
+    "pa0008": [
+        {"target_column1": "employee_id", "target_column2": "Employee ID", "description": "Unique employee identifier"},
+        {"target_column1": "start_date", "target_column2": "Start Date", "description": "Start of payroll period"},
+        {"target_column1": "end_date", "target_column2": "End Date", "description": "End of payroll period"},
+        {"target_column1": "amount", "target_column2": "Amount", "description": "Payment amount"}
+    ],
+    "pa0014": [
+        {"target_column1": "employee_id", "target_column2": "Employee ID", "description": "Unique employee identifier"},
+        {"target_column1": "wage_type", "target_column2": "Wage Type", "description": "Type of wage"},
+        {"target_column1": "amount", "target_column2": "Amount", "description": "Wage amount"},
+        {"target_column1": "currency", "target_column2": "Currency", "description": "Payment currency"}
     ]
 }
 
