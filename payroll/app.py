@@ -27,14 +27,10 @@ from config_manager import (
     render_admin_config_manager  # ✅ Updated from show_admin_panel
 )
 
-
-
 from foundation_module.foundation_app import render as render_foundation
 from employee_app import render_employee_tool
 from employeedata.app.data_migration_tool import render_employee_v2
 from payroll.app import render_payroll_tool
-
-
 @st.cache_data
 def load_data(file):
     return pd.read_excel(file)
@@ -67,7 +63,6 @@ def standardize_dates(df, date_columns):
         if col in df_copy.columns:
             df_copy[col] = df_copy[col].apply(try_parse)
     return df_copy
-
 def show_comparison(original, cleansed):
     diff_df = original.copy()
     for col in original.columns:
@@ -96,6 +91,7 @@ def show_dashboard(df):
     else:
         fig = px.bar(x=nulls.index, y=nulls.values, title="Nulls per Column", labels={'x': 'Column', 'y': 'Nulls'})
         st.plotly_chart(fig, use_container_width=True)
+
     st.markdown("**Value Distribution**")
     if pd.api.types.is_numeric_dtype(df[selected_col]):
         fig2 = px.histogram(df, x=selected_col, title=f"{selected_col} Distribution")
@@ -107,7 +103,6 @@ def show_dashboard(df):
 def descriptive_statistics(df):
     st.subheader("📈 Descriptive Stats")
     st.dataframe(df.describe(include='all'))
-
 def show_validation(df):
     st.subheader("✅ Validation Panel")
     null_summary = df.isnull().sum().reset_index()
@@ -136,7 +131,6 @@ Answer this:
     )
     chain = LLMChain(llm=llm, prompt=prompt)
     return chain.run({"question": query, "context": context})
-
 def render_payroll_tool():
     st.title("🔍 Enhanced Payroll Mapping & Cleansing Tool")
 
@@ -204,6 +198,7 @@ def render_payroll_tool():
                 if query:
                     st.markdown("**Answer:**")
                     st.write(get_nlp_answer(query, df_8_clean))
+
     elif view == "Configuration Manager":
         st.markdown("## 🛠️ Payroll Data – Configuration Manager")
         initialize_directories()
@@ -232,4 +227,3 @@ def render_payroll_tool():
 
         with tabD:
             render_column_mapping_interface(mode="payroll")
-
