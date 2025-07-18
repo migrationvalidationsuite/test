@@ -380,21 +380,6 @@ elif selected == "Launch Demo":
         selected_radio = st.radio("Foundation Section:", ["Tool", "Configuration Manager"], key="foundation_radio")
         st.session_state.tool_subpage = selected_radio  # ✅ sync selection
     
-        if st.session_state.tool_subpage == "Tool":
-            st.markdown("### Foundation Data – Interactive View")
-            render_foundation()
-        else:
-            try:
-                show_admin_panel(mode="foundation")
-            except Exception as e:
-                st.error(f"Configuration Manager failed to load: {e}")
-
-        if st.session_state.tool_subpage == "Tool":
-            st.markdown("### Foundation Data – Interactive View")
-            render_foundation()
-        else:
-            show_admin_panel(mode="foundation")
-
 
     elif st.session_state.demo_page == "employee_data_v2":
         back_col, _ = st.columns([1, 5])
