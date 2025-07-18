@@ -381,8 +381,7 @@ elif selected == "Launch Demo":
             st.markdown("### Foundation Data – Interactive View")
             render_foundation()
         else:
-            show_admin_panel(state={"tool": "foundation"})
-
+            show_admin_panel(mode="foundation")
 
 
     elif st.session_state.demo_page == "employee_data_v2":
