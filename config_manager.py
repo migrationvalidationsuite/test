@@ -431,7 +431,7 @@ def show_admin_panel(mode: str = "foundation") -> None:
             st.info(f"No sample uploaded for {source_file_type} yet")
 
     with tab2:
-        template_type = st.radio("Select template type:", ["Level", "Association"], horizontal=True)
+        template_type = st.radio("Select template type:", ["Level", "Association"], horizontal=True, key=f"template_type_radio_{mode}")
         render_template_editor(template_type, mode)
 
     with tab3:
