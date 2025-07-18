@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import List, Dict, Optional, Union
 
-# Constants (dynamic mode support)
+# Constants for different tool modes
 BASE_DIR = {
     "foundation": "foundation_configs",
     "payroll": "payroll_configs"
@@ -13,9 +13,10 @@ BASE_DIR = {
 
 MAX_SAMPLE_ROWS = 1000
 
-def get_paths(mode: str):
+# Utility to get all necessary directories for a given mode
+def get_paths(mode: str) -> Optional[Dict[str, str]]:
     if mode not in BASE_DIR:
-        st.error(f"Invalid mode: {mode}")
+        st.error(f"❌ Invalid mode: {mode}. Must be one of: {list(BASE_DIR.keys())}")
         return None
 
     base = BASE_DIR[mode]
