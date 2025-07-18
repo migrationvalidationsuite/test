@@ -186,8 +186,11 @@ def process_uploaded_file(uploaded_file, source_file_type: str, mode: str) -> No
 def get_picklist_dir(mode: str) -> str:
     return os.path.join(PICKLIST_DIR, mode)
 
-def get_sample_path(source_file: str, mode: str) -> str:
-    return os.path.join(SOURCE_SAMPLES_DIR, mode, f"{source_file_type}_sample.csv")
+def get_sample_path(source_file_type: str, mode: str) -> str:
+    """Return full path to the saved sample file."""
+    paths = get_paths(mode)
+    return os.path.join(paths["SAMPLES_DIR"], f"{source_file_type}_sample.csv")
+
 
 def get_config_path(config_type: str, mode: str) -> str:
     return os.path.join(CONFIG_DIR, mode, f"{config_type}_config.json")
