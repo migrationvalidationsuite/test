@@ -2,20 +2,10 @@ import os, sys
 import streamlit as st
 import base64
 from streamlit_option_menu import option_menu
-
 from foundation_module.foundation_app import render as render_foundation
+from payroll import app as payroll_app
 from employee_app import render_employee_tool
 from employeedata.app.data_migration_tool import render_employee_v2
-#from payroll.app import render_payroll_tool
-import payroll.app as payroll_app
-from config_manager import show_admin_panel  # Add this at top with other imports
-
-
-
-# ✅ Correct usage
-# render_payroll_tool()
-
-
 # Hide Streamlit style (footer and hamburger menu)
 # 🔒 Hide Streamlit footer, menu, and header for a cleaner look
 st.markdown("""
@@ -104,8 +94,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-
-
 # ✅ Background image setup
 def set_background(image_file):
     with open(image_file, "rb") as f:
@@ -166,88 +154,6 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-
-def render_template_editor(template_type=None):
-    """
-    Render the template editor interface with payroll-specific handling
-    """
-    st.subheader("Template Editor")
-    
-    config = load_config()
-    templates = config.get('templates', DEFAULT_TEMPLATES)
-    
-    # Payroll-specific template handling
-    if template_type == "payroll":
-        if "payroll_template" not in templates:
-            # Create a default payroll template based on the data structure
-            templates["payroll_template"] = {
-                "employee_id": {"type": "string", "source": "Pers.No."},
-                "wage_type": {"type": "string", "source": "Wage type"},
-                "amount": {"type": "number", "source": "Amount"},
-                "currency": {"type": "string", "source": "Crcy"},
-                "start_date": {"type": "date", "source": "Start Date"},
-                "end_date": {"type": "date", "source": "End Date"},
-                "assignment": {"type": "string", "source": "Assignment number"}
-            }
-            save_config(config)
-    
-    # Template selection
-    template_names = list(templates.keys())
-    if not template_names:
-        st.warning("No templates available")
-        return
-    
-    selected_template = st.selectbox("Select Template", template_names)
-    
-    if selected_template:
-        try:
-            # Edit template
-            template_content = templates[selected_template]
-            
-            # Convert to text for editing - handle both dict and string templates
-            if isinstance(template_content, dict):
-                template_text = json.dumps(template_content, indent=2)
-            else:
-                template_text = str(template_content)
-            
-            edited_template = st.text_area(
-                f"Edit {selected_template}",
-                value=template_text,
-                height=300
-            )
-            
-            col1, col2 = st.columns(2)
-            with col1:
-                if st.button("Save Template"):
-                    try:
-                        # Try to parse as JSON if it looks like JSON
-                        if edited_template.strip().startswith('{'):
-                            parsed_template = json.loads(edited_template)
-                        else:
-                            parsed_template = edited_template
-                        
-                        # Update config
-                        config['templates'][selected_template] = parsed_template
-                        if save_config(config):
-                            st.success(f"Template '{selected_template}' saved successfully")
-                        else:
-                            st.error("Failed to save template")
-                    except json.JSONDecodeError as e:
-                        st.error(f"Invalid JSON format: {str(e)}")
-            
-            with col2:
-                if st.button("Delete Template"):
-                    if selected_template in config['templates']:
-                        del config['templates'][selected_template]
-                        if save_config(config):
-                            st.success(f"Template '{selected_template}' deleted")
-                            st.rerun()
-                        else:
-                            st.error("Failed to delete template")
-        
-        except Exception as e:
-            st.error(f"Error rendering template editor: {str(e)}")
-            st.error("Please check the template format in your configuration")
 
 # -------------------- HOME --------------------
 if selected == "Home":
@@ -412,10 +318,6 @@ elif selected == "Launch Demo":
                     st.markdown(detail_text)
         migration_row("Foundation Data", "fd_demo", "- Legal Entity\n- Job Classification\n- Location\n- Org Units\n...", next_page="foundation_data_view")
 
-        # ✅ New: Foundation Data V2
-        migration_row("Foundation Data V2", "fd_demo_v2", "- New config-based editor\n- Picklists, templates, mappings\n...", next_page="foundation_data_v2")
-
-
         # Time Data — grayed out and disabled
         col1, col2 = st.columns([5, 3.8])
         with col1:
@@ -444,6 +346,7 @@ elif selected == "Launch Demo":
             next_page="employee_data_v2"
         )
 
+
     elif st.session_state.demo_page == "payroll_data_tool":
         back_col, _ = st.columns([1, 5])
         with back_col:
@@ -451,10 +354,8 @@ elif selected == "Launch Demo":
                 st.session_state.demo_page = "sap_to_sf"
                 st.rerun()
 
-    # ✅ Import and call inside this block to avoid circular import
-        import payroll.app as payroll_app
+        # ✅ This actually loads your payroll Streamlit tool
         payroll_app.render_payroll_tool()
-
 
     elif st.session_state.demo_page == "foundation_data_view":
         back_col, _ = st.columns([1, 5])
@@ -476,17 +377,6 @@ elif selected == "Launch Demo":
 
         st.markdown("### Employee Data V2 – Interactive Migration Tool")
         render_employee_v2()
-
-    elif st.session_state.demo_page == "foundation_data_v2":
-        back_col, _ = st.columns([1, 5])
-        with back_col:
-            if st.button("⬅ Back to Demo", key="back_from_foundation_v2"):
-                st.session_state.demo_page = "sap_to_sf"
-                st.rerun()
-    
-        from config_manager import show_admin_panel  # Import here if circular imports exist
-        show_admin_panel()
-
 
 
 # -------------------- SOLUTIONS --------------------
@@ -653,5 +543,4 @@ Visual dashboards and summary reports offer real-time reconciliation status for 
 - Logged Issues for Governance & Audit
             """)
             st.image("pexels-divinetechygirl-1181341.jpg", use_container_width=False, width=350)
-
 
