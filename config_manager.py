@@ -186,7 +186,7 @@ def get_picklist_dir(mode: str) -> str:
     return os.path.join(PICKLIST_DIR, mode)
 
 def get_sample_path(source_file: str, mode: str) -> str:
-    return os.path.join(SOURCE_SAMPLES_DIR, mode, f"{source_file}_sample.csv")
+    return os.path.join(SOURCE_SAMPLES_DIR, mode, f"{source_file_type}_sample.csv")
 
 def get_config_path(config_type: str, mode: str) -> str:
     return os.path.join(CONFIG_DIR, mode, f"{config_type}_config.json")
