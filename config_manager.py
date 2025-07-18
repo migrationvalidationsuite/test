@@ -403,7 +403,8 @@ def show_admin_panel(mode: str = "foundation") -> None:
         st.info("Upload sample files first to configure column mappings")
 
         source_options = ["PA0008", "PA0014"] if mode == "payroll" else ["HRP1000", "HRP1001"]
-        source_file_type = st.radio("Select source file type:", source_options, horizontal=True)
+        source_file_type = st.radio("Select source file type:", source_options, horizontal=True, key=f"source_file_type_radio_{mode}")
+
 
 
         uploaded_file = st.file_uploader(
