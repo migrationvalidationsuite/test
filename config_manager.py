@@ -313,7 +313,7 @@ def manage_picklists(mode: str):
     else:
         st.info("No picklists available. Upload or create one manually.")
 def render_column_mapping_interface(mode: str):
-    st.subheader(f"Column Mapping – {mode.capitalize()} Mode")
+    st.subheader(f"Column Mapping – {'Payroll' if mode == 'payroll' else 'Foundation'} Mode")
 
     st.info("This section allows you to define how source columns map to destination columns using transformations.")
 
@@ -322,7 +322,9 @@ def render_column_mapping_interface(mode: str):
         st.error("Failed to resolve paths.")
         return
 
-    source_file = st.selectbox("Select source file type", ["HRP1000", "HRP1001"], key=f"column_map_src_{mode}")
+    # Dynamically select file types based on mode
+    file_options = ["PA0008", "PA0014"] if mode == "payroll" else ["HRP1000", "HRP1001"]
+    source_file = st.selectbox("Select source file type", file_options, key=f"column_map_src_{mode}")
     sample_path = os.path.join(paths["SAMPLES_DIR"], f"{source_file}_sample.csv")
 
     if not os.path.exists(sample_path):
