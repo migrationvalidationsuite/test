@@ -2,11 +2,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-import os
-import sys
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
+# Optional: LLM support
 try:
     from langchain.llms import Ollama
     from langchain.chains import LLMChain
@@ -15,24 +12,6 @@ try:
 except:
     llm_enabled = False
 
-from config_manager import (
-    show_admin_panel,
-    initialize_directories,
-    render_template_editor,
-    manage_picklists,
-    render_column_mapping_interface,
-    get_source_columns,
-    get_picklist_columns,
-    load_config,
-    DEFAULT_TEMPLATES,
-    save_config,
-    process_uploaded_file
-)
-
-
-from foundation_module.foundation_app import render as render_foundation
-from employee_app import render_employee_tool
-from employeedata.app.data_migration_tool import render_employee_v2
 @st.cache_data
 def load_data(file):
     return pd.read_excel(file)
@@ -65,6 +44,7 @@ def standardize_dates(df, date_columns):
         if col in df_copy.columns:
             df_copy[col] = df_copy[col].apply(try_parse)
     return df_copy
+
 def show_comparison(original, cleansed):
     diff_df = original.copy()
     for col in original.columns:
@@ -73,7 +53,7 @@ def show_comparison(original, cleansed):
     return diff_df
 
 def display_metadata(df, label):
-    st.subheader(f"📜 Metadata for {label}")
+    st.subheader(f"🧾 Metadata for {label}")
     st.write("**Data Types:**")
     st.write(df.dtypes)
     st.write("**Null Count:**")
@@ -105,6 +85,7 @@ def show_dashboard(df):
 def descriptive_statistics(df):
     st.subheader("📈 Descriptive Stats")
     st.dataframe(df.describe(include='all'))
+
 def show_validation(df):
     st.subheader("✅ Validation Panel")
     null_summary = df.isnull().sum().reset_index()
@@ -133,75 +114,68 @@ Answer this:
     )
     chain = LLMChain(llm=llm, prompt=prompt)
     return chain.run({"question": query, "context": context})
+
 def render_payroll_tool():
     st.title("🔍 Enhanced Payroll Mapping & Cleansing Tool")
 
-    view = st.radio(
-        "Select View Mode", 
-        ["Mapping & Cleansing", "Configuration Manager"], 
-        horizontal=True,
-        key="payroll_view_mode"
-    )
+    with st.sidebar:
+        st.header("Cleansing Options")
+        trim = st.checkbox("Trim Whitespace", True)
+        lower = st.checkbox("Lowercase", True)
+        empty_nan = st.checkbox("Empty → NaN", True)
+        drop_null = st.checkbox("Drop Null Rows", False)
 
-    if view == "Mapping & Cleansing":
-        with st.sidebar:
-            st.header("Cleansing Options")
-            trim = st.checkbox("Trim Whitespace", True, key="trim_checkbox")
-            lower = st.checkbox("Lowercase", True, key="lower_checkbox")
-            empty_nan = st.checkbox("Empty → NaN", True, key="empty_nan_checkbox")
-            drop_null = st.checkbox("Drop Null Rows", False, key="drop_null_checkbox")
+    uploaded_0008 = st.file_uploader("Upload PA0008.xlsx", type=["xlsx"])
+    uploaded_0014 = st.file_uploader("Upload PA0014.xlsx", type=["xlsx"])
 
-        uploaded_0008 = st.file_uploader("Upload PA0008.xlsx", type=["xlsx"], key="payroll_0008_upload")
-        uploaded_0014 = st.file_uploader("Upload PA0014.xlsx", type=["xlsx"], key="payroll_0014_upload")
+    if uploaded_0008 and uploaded_0014:
+        df_8 = load_data(uploaded_0008)
+        df_14 = load_data(uploaded_0014)
 
-        if uploaded_0008 and uploaded_0014:
-            # [Keep all your existing processing logic]
-            pass
+        df_8_clean = cleanse_dataframe(df_8, trim, lower, empty_nan, drop_null)
+        df_14_clean = cleanse_dataframe(df_14, trim, lower, empty_nan, drop_null)
 
-    elif view == "Configuration Manager":
-        st.markdown("## 🛠️ Payroll Data – Configuration Manager")
-        initialize_directories()
+        df_8_clean = standardize_dates(df_8_clean, ["Start date", "End Date"])
+        df_14_clean = standardize_dates(df_14_clean, ["Start date", "End Date"])
 
-        # Sidebar navigation
-        with st.sidebar:
-            st.subheader("Configuration Sections")
-            config_section = st.radio(
-                "Select Section:",
-                ["Source Files", "Templates", "Picklists", "Mappings"],
-                key="payroll_config_section"
-            )
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+            "Cleanse", "Metadata", "Validation", "Dashboard", "Stats", "Ask Your Data"
+        ])
 
-        # Main content
-        if config_section == "Source Files":
-            st.subheader("📂 Upload Source Files")
-            source_type = st.radio(
-                "File Type:",
-                ["PA0008", "PA0014"],
-                horizontal=True,
-                key="payroll_source_type"
-            )
-            uploaded_file = st.file_uploader(
-                f"Upload {source_type} sample",
-                type=["csv", "xlsx"],
-                key=f"payroll_{source_type}_upload"
-            )
-            if uploaded_file:
-                process_uploaded_file(uploaded_file, source_type)
+        with tab1:
+            st.subheader("🧹 Cleanse & Compare")
+            col1, col2 = st.columns(2)
+            with col1:
+                st.write("PA0008 – Original")
+                st.dataframe(df_8)
+            with col2:
+                st.write("PA0008 – Cleansed")
+                st.dataframe(show_comparison(df_8, df_8_clean))
 
-        elif config_section == "Templates":
-            st.subheader("📄 Template Configuration")
-            template_type = st.radio(
-                "Template Type:",
-                ["PA0008", "PA0014"],
-                horizontal=True,
-                key="payroll_template_type"
-            )
-            render_template_editor(template_type)
+            col3, col4 = st.columns(2)
+            with col3:
+                st.write("PA0014 – Original")
+                st.dataframe(df_14)
+            with col4:
+                st.write("PA0014 – Cleansed")
+                st.dataframe(show_comparison(df_14, df_14_clean))
 
-        elif config_section == "Picklists":
-            st.subheader("🗃️ Picklist Management")
-            manage_picklists()
+        with tab2:
+            display_metadata(df_8_clean, "PA0008")
+            display_metadata(df_14_clean, "PA0014")
 
-        elif config_section == "Mappings":
-            st.subheader("🔄 Column Mapping")
-            render_column_mapping_interface(mode="payroll")
+        with tab3:
+            show_validation(df_8_clean)
+
+        with tab4:
+            show_dashboard(df_8_clean)
+
+        with tab5:
+            descriptive_statistics(df_8_clean)
+
+        with tab6:
+            st.subheader("💬 Ask Your Data")
+            query = st.text_input("Ask a question:")
+            if query:
+                st.markdown("**Answer:**")
+                st.write(get_nlp_answer(query, df_8_clean))
