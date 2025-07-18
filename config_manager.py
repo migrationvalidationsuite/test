@@ -146,8 +146,11 @@ def validate_sample_columns(source_file: str, sample_df: pd.DataFrame) -> tuple:
     """Validate required columns exist in sample."""
     required = {
         "HRP1000": ["Object ID", "Name", "Start date"],
-        "HRP1001": ["Source ID", "Target object ID", "Start date"]
+        "HRP1001": ["Source ID", "Target object ID", "Start date"],
+        "PA0008": ["Employee", "Wage Type", "Amount"],  # replace with your real required cols
+        "PA0014": ["Employee", "Deduction Type", "Start Date"]
     }
+
     missing = set(required.get(source_file, [])) - set(sample_df.columns)
     return (False, f"Missing required: {', '.join(missing)}") if missing else (True, "Valid columns")
 
@@ -397,7 +400,9 @@ def show_admin_panel(mode: str = "foundation") -> None:
         st.subheader("Upload Source File Samples")
         st.info("Upload sample files first to configure column mappings")
 
-        source_file_type = st.radio("Select source file type:", ["HRP1000", "HRP1001"], horizontal=True)
+        source_options = ["PA0008", "PA0014"] if mode == "payroll" else ["HRP1000", "HRP1001"]
+        source_file_type = st.radio("Select source file type:", source_options, horizontal=True)
+
 
         uploaded_file = st.file_uploader(
             f"Upload {source_file_type} sample file (CSV or Excel)",
