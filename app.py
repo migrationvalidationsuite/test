@@ -6,6 +6,8 @@ from foundation_module.foundation_app import render as render_foundation
 from payroll import app as payroll_app
 from employee_app import render_employee_tool
 from employeedata.app.data_migration_tool import render_employee_v2
+from config_manager import show_admin_panel
+
 # Hide Streamlit style (footer and hamburger menu)
 # 🔒 Hide Streamlit footer, menu, and header for a cleaner look
 st.markdown("""
@@ -18,6 +20,8 @@ st.markdown("""
 
 if "page" not in st.session_state:
     st.session_state.page = "Home"
+if "tool_subpage" not in st.session_state:
+    st.session_state.tool_subpage = "Tool"
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
@@ -354,8 +358,14 @@ elif selected == "Launch Demo":
                 st.session_state.demo_page = "sap_to_sf"
                 st.rerun()
 
-        # ✅ This actually loads your payroll Streamlit tool
-        payroll_app.render_payroll_tool()
+        st.sidebar.markdown("---")
+        st.session_state.tool_subpage = st.sidebar.radio("Payroll Section:", ["Tool", "Configuration Manager"], key="payroll_radio")
+
+        if st.session_state.tool_subpage == "Tool":
+            payroll_app.render_payroll_tool()
+        else:
+            show_admin_panel(state={"tool": "payroll"})
+
 
     elif st.session_state.demo_page == "foundation_data_view":
         back_col, _ = st.columns([1, 5])
@@ -363,9 +373,16 @@ elif selected == "Launch Demo":
             if st.button("⬅ Back to Demo", key="back_from_foundation", use_container_width=True):
                 st.session_state.demo_page = "sap_to_sf"
                 st.rerun()
-    
-        st.markdown("### Foundation Data – Interactive View")
-        render_foundation()
+
+        st.sidebar.markdown("---")
+        st.session_state.tool_subpage = st.sidebar.radio("Foundation Section:", ["Tool", "Configuration Manager"], key="foundation_radio")
+
+        if st.session_state.tool_subpage == "Tool":
+            st.markdown("### Foundation Data – Interactive View")
+            render_foundation()
+        else:
+            show_admin_panel(state={"tool": "foundation"})
+
 
 
     elif st.session_state.demo_page == "employee_data_v2":
