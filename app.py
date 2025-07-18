@@ -359,7 +359,7 @@ elif selected == "Launch Demo":
                 st.rerun()
 
         st.sidebar.markdown("---")
-        st.session_state.tool_subpage = st.sidebar.radio("Payroll Section:", ["Tool", "Configuration Manager"], key="payroll_radio")
+        st.radio("Payroll Section:", ["Configuration Manager", "Tool"], key="payroll_radio")
 
         if st.session_state.tool_subpage == "Tool":
             payroll_app.render_payroll_tool()
@@ -374,7 +374,7 @@ elif selected == "Launch Demo":
                 st.rerun()
 
         st.sidebar.markdown("---")
-        st.session_state.tool_subpage = st.sidebar.radio("Foundation Section:", ["Tool", "Configuration Manager"], key="foundation_radio")
+        st.radio("Foundation Section:", ["Configuration Manager", "Tool"], key="foundation_radio")
 
         if st.session_state.tool_subpage == "Tool":
             st.markdown("### Foundation Data – Interactive View")
