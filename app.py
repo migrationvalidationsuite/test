@@ -350,31 +350,44 @@ elif selected == "Launch Demo":
             next_page="employee_data_v2"
         )
 
-
     elif st.session_state.demo_page == "payroll_data_tool":
         back_col, _ = st.columns([1, 5])
         with back_col:
             if st.button("⬅ Back to Demo", key="back_from_payroll", use_container_width=True):
                 st.session_state.demo_page = "sap_to_sf"
                 st.rerun()
-
+    
         st.sidebar.markdown("---")
-        st.radio("Payroll Section:", ["Tool", "Configuration Manager"], key="payroll_radio")
-
+        selected_radio = st.radio("Payroll Section:", ["Tool", "Configuration Manager"], key="payroll_radio")
+        st.session_state.tool_subpage = selected_radio  # ✅ sync selection
+    
         if st.session_state.tool_subpage == "Tool":
             payroll_app.render_payroll_tool()
         else:
-            show_admin_panel(mode="payroll")
-
+            try:
+                show_admin_panel(mode="payroll")
+            except Exception as e:
+                st.error(f"Configuration Manager failed to load: {e}")
+    
     elif st.session_state.demo_page == "foundation_data_view":
         back_col, _ = st.columns([1, 5])
         with back_col:
             if st.button("⬅ Back to Demo", key="back_from_foundation", use_container_width=True):
                 st.session_state.demo_page = "sap_to_sf"
                 st.rerun()
-
+    
         st.sidebar.markdown("---")
-        st.radio("Foundation Section:", ["Tool", "Configuration Manager"], key="foundation_radio")
+        selected_radio = st.radio("Foundation Section:", ["Tool", "Configuration Manager"], key="foundation_radio")
+        st.session_state.tool_subpage = selected_radio  # ✅ sync selection
+    
+        if st.session_state.tool_subpage == "Tool":
+            st.markdown("### Foundation Data – Interactive View")
+            render_foundation()
+        else:
+            try:
+                show_admin_panel(mode="foundation")
+            except Exception as e:
+                st.error(f"Configuration Manager failed to load: {e}")
 
         if st.session_state.tool_subpage == "Tool":
             st.markdown("### Foundation Data – Interactive View")
