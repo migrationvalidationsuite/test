@@ -364,8 +364,7 @@ elif selected == "Launch Demo":
         if st.session_state.tool_subpage == "Tool":
             payroll_app.render_payroll_tool()
         else:
-            show_admin_panel(state={"tool": "payroll"})
-
+            show_admin_panel(mode="payroll")
 
     elif st.session_state.demo_page == "foundation_data_view":
         back_col, _ = st.columns([1, 5])
