@@ -289,6 +289,27 @@ def render_template_editor(template_type: str, mode: str) -> None:
             except Exception as e:
                 st.error(f"Failed to parse input: {e}")
 
+def manage_picklists(mode: str):
+    st.subheader("📌 Picklist Management")
+
+    paths = get_paths(mode)
+    picklist_dir = paths["PICKLIST_DIR"]
+    os.makedirs(picklist_dir, exist_ok=True)
+
+    picklist_files = [f for f in os.listdir(picklist_dir) if f.endswith(".csv")]
+
+    selected_file = st.selectbox("Select a picklist to view/edit", picklist_files) if picklist_files else None
+
+    if selected_file:
+        df = pd.read_csv(os.path.join(picklist_dir, selected_file))
+        edited_df = st.data_editor(df, use_container_width=True, num_rows="dynamic")
+        
+        if st.button("💾 Save Picklist"):
+            edited_df.to_csv(os.path.join(picklist_dir, selected_file), index=False)
+            st.success("Picklist saved!")
+    else:
+        st.info("No picklists available. Upload or create one manually.")
+
 def show_admin_panel(mode: str = "foundation") -> None:
     """Render the admin interface based on selected mode."""
     st.title(f"Configuration Manager – {mode.capitalize()} Mode")
