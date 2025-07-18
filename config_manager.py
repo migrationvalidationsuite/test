@@ -217,6 +217,78 @@ def load_config(config_type: str, mode: str) -> Optional[Union[Dict, List]]:
     except Exception as e:
         st.error(f"Error loading {config_type} config for {mode}: {e}")
         return None
+
+def render_template_editor(template_type: str, mode: str) -> None:
+    """Render the template editor with dynamic config directory based on mode."""
+    st.subheader(f"{template_type} Template Configuration")
+
+    paths = get_paths(mode)
+    config_path = paths["CONFIG_DIR"]
+    default_template = DEFAULT_TEMPLATES[template_type.lower()]
+
+    config_file = os.path.join(config_path, f"{template_type.lower()}_config.json")
+    if os.path.exists(config_file):
+        with open(config_file, "r") as f:
+            try:
+                current_template = json.load(f)
+            except json.JSONDecodeError:
+                current_template = default_template
+    else:
+        current_template = default_template
+
+    if f"{template_type}_template" not in st.session_state:
+        st.session_state[f"{template_type}_template"] = current_template.copy()
+
+    edit_mode = st.radio(
+        "Edit Mode:",
+        ["Table Editor", "Text Input"],
+        horizontal=True,
+        key=f"{template_type}_edit_mode"
+    )
+
+    if st.button("Reset to Default Templates"):
+        st.session_state[f"{template_type}_template"] = default_template.copy()
+        with open(config_file, "w") as f:
+            json.dump(st.session_state[f"{template_type}_template"], f, indent=2)
+        st.success(f"{template_type} template reset to default!")
+        st.rerun()
+
+    if edit_mode == "Table Editor":
+        for i, row in enumerate(st.session_state[f"{template_type}_template"]):
+            cols = st.columns([3, 3, 3, 1])
+            row['target_column1'] = cols[0].text_input(
+                "System Column Name", value=row['target_column1'], key=f"{template_type}_col1_{i}", label_visibility="collapsed"
+            )
+            row['target_column2'] = cols[1].text_input(
+                "Display Name", value=row['target_column2'], key=f"{template_type}_col2_{i}", label_visibility="collapsed"
+            )
+            row['description'] = cols[2].text_input(
+                "Description", value=row.get('description', ''), key=f"{template_type}_desc_{i}", label_visibility="collapsed"
+            )
+            if cols[3].button("🗑️", key=f"{template_type}_del_{i}"):
+                del st.session_state[f"{template_type}_template"][i]
+                st.rerun()
+
+        if st.button("Save Template"):
+            with open(config_file, "w") as f:
+                json.dump(st.session_state[f"{template_type}_template"], f, indent=2)
+            st.success("Template saved successfully!")
+
+    else:  # Text Input
+        text_input = st.text_area(
+            "Template (CSV format: col1,col2,desc)",
+            value=convert_template_to_text(st.session_state[f"{template_type}_template"]),
+            height=250
+        )
+        if st.button("Apply Text Changes"):
+            try:
+                parsed = convert_text_to_template(text_input)
+                st.session_state[f"{template_type}_template"] = parsed
+                st.success("Template updated!")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Failed to parse input: {e}")
+
 def show_admin_panel(mode: str = "foundation") -> None:
     """Render the admin interface based on selected mode."""
     st.title(f"Configuration Manager – {mode.capitalize()} Mode")
