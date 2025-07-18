@@ -309,6 +309,76 @@ def manage_picklists(mode: str):
             st.success("Picklist saved!")
     else:
         st.info("No picklists available. Upload or create one manually.")
+def render_column_mapping_interface(mode: str):
+    st.subheader(f"Column Mapping – {mode.capitalize()} Mode")
+
+    st.info("This section allows you to define how source columns map to destination columns using transformations.")
+
+    paths = get_paths(mode)
+    if not paths:
+        st.error("Failed to resolve paths.")
+        return
+
+    source_file = st.selectbox("Select source file type", ["HRP1000", "HRP1001"], key=f"column_map_src_{mode}")
+    sample_path = os.path.join(paths["SAMPLES_DIR"], f"{source_file}_sample.csv")
+
+    if not os.path.exists(sample_path):
+        st.warning(f"No sample file uploaded for {source_file}. Please upload one in the first tab.")
+        return
+
+    try:
+        sample_df = pd.read_csv(sample_path)
+        columns = sample_df.columns.tolist()
+    except Exception as e:
+        st.error(f"Error reading sample: {e}")
+        return
+
+    config_path = os.path.join(paths["CONFIG_DIR"], f"{source_file}_column_mapping.json")
+    existing_mappings = []
+
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, "r") as f:
+                existing_mappings = json.load(f)
+        except Exception as e:
+            st.error(f"Error loading existing mappings: {e}")
+
+    if f"mappings_{source_file}_{mode}" not in st.session_state:
+        st.session_state[f"mappings_{source_file}_{mode}"] = existing_mappings
+
+    st.markdown("### 🔁 Define Mappings")
+    for i, mapping in enumerate(st.session_state[f"mappings_{source_file}_{mode}"]):
+        cols = st.columns([3, 3, 3, 1])
+        mapping["source_column"] = cols[0].selectbox(
+            "Source", columns, index=columns.index(mapping["source_column"]) if mapping["source_column"] in columns else 0,
+            key=f"{mode}_src_{i}", label_visibility="collapsed"
+        )
+        mapping["destination_column"] = cols[1].text_input(
+            "Destination", value=mapping["destination_column"], key=f"{mode}_dest_{i}", label_visibility="collapsed"
+        )
+        mapping["transformation"] = cols[2].selectbox(
+            "Transformation", list(TRANSFORMATION_LIBRARY.keys()),
+            index=list(TRANSFORMATION_LIBRARY.keys()).index(mapping["transformation"]) if mapping["transformation"] in TRANSFORMATION_LIBRARY else 0,
+            key=f"{mode}_trans_{i}", label_visibility="collapsed"
+        )
+        if cols[3].button("🗑️", key=f"{mode}_del_map_{i}"):
+            del st.session_state[f"mappings_{source_file}_{mode}"][i]
+            st.rerun()
+
+    if st.button("➕ Add New Mapping"):
+        st.session_state[f"mappings_{source_file}_{mode}"].append({
+            "source_column": columns[0],
+            "destination_column": "",
+            "transformation": "None"
+        })
+
+    if st.button("💾 Save Mappings"):
+        try:
+            with open(config_path, "w") as f:
+                json.dump(st.session_state[f"mappings_{source_file}_{mode}"], f, indent=2)
+            st.success("Mappings saved!")
+        except Exception as e:
+            st.error(f"Error saving: {e}")
 
 def show_admin_panel(mode: str = "foundation") -> None:
     """Render the admin interface based on selected mode."""
