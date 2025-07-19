@@ -347,23 +347,27 @@ def show_admin_panel(mode: str = "foundation") -> None:
     ])
 
     with tab1:
-        st.subheader("📁 Upload Sample Files")
-        source_options = ["PA0008", "PA0014"] if mode == "payroll" else ["HRP1000", "HRP1001"]
-        source_type = st.radio("Choose file type:", source_options, horizontal=True, key=f"src_type_{mode}")
-        
-        uploaded_file = st.file_uploader("Upload CSV or Excel", type=["csv", "xlsx"], key=f"{source_type}_{mode}_upload")
-        if uploaded_file:
-            process_uploaded_file(uploaded_file, source_type, mode)
+    st.subheader("📁 Upload Sample Files")
 
-        sample_path = get_sample_path(source_type, mode)
-        if os.path.exists(sample_path):
-            try:
-                df = pd.read_csv(sample_path, nrows=1)
-                st.success(f"✅ {source_type} Sample Loaded")
-                is_valid, msg = validate_sample_columns(source_type, df)
-                st.success("✔ Columns valid") if is_valid else st.error(f"Missing columns: {msg}")
-            except Exception as e:
-                st.error(f"⚠️ Failed to read sample: {e}")
+    source_options = ["PA0008", "PA0014"] if mode == "payroll" else ["HRP1000", "HRP1001"]
+    file_type = st.radio("Choose file type:", source_options, horizontal=True, key=f"{mode}_filetype")
+
+    uploaded_file = st.file_uploader("Upload CSV or Excel", type=["csv", "xlsx"], key=f"{mode}_{file_type}")
+
+    if uploaded_file:
+        try:
+            if uploaded_file.name.endswith(".csv"):
+                df = pd.read_csv(uploaded_file)
+            else:
+                df = pd.read_excel(uploaded_file)
+
+            if validate_sample_columns(df):
+                process_uploaded_file(uploaded_file, file_type, mode)
+                st.success(f"{file_type} Sample Loaded ✅")
+            else:
+                st.error("❌ Uploaded file has no valid columns.")
+        except Exception as e:
+            st.error(f"⚠️ Failed to read sample: {e}")
 
     with tab2:
         if mode == "payroll":
