@@ -124,7 +124,7 @@ def render_payroll_tool():
 
     with tab2:
         st.subheader("Null Summary – PA0008")
-        st.dataframe(df_8_transformed.isnull().sum().reset_index(names=["Column", "Nulls"]))
+        st.dataframe(df_8_transformed.isnull().sum().reset_index().rename(columns={0: "Nulls", "index": "Column"}))
         if "amount" in df_8_transformed.columns:
             st.subheader("Negative Amounts")
             st.dataframe(df_8_transformed[df_8_transformed["amount"] < 0])
