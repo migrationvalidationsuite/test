@@ -461,8 +461,7 @@ def show_admin_panel(mode: str = "foundation") -> None:
                 st.info(f"Current sample has {len(df.columns)} columns")
                 is_valid, msg = validate_sample_columns(source_file_type, df)
                 st.success(msg) if is_valid else st.error(msg)
-                if df.columns.tolist():
-                    st.write("Available Columns:", ", ".join(df.columns.tolist()))
+
 
             except Exception as e:
                 st.error(f"Error reading sample: {e}")
