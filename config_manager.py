@@ -50,9 +50,20 @@ def process_uploaded_file(uploaded_file, source_file_type, mode):
             os.makedirs(os.path.dirname(path), exist_ok=True)
             df.to_csv(path, index=False)
 
-def validate_sample_columns(df: pd.DataFrame) -> bool:
-    """Ensure the uploaded sample file has at least one column."""
-    return isinstance(df, pd.DataFrame) and not df.empty and len(df.columns) > 0
+def validate_sample_columns(source_type: str, df: pd.DataFrame) -> Tuple[bool, str]:
+    """Validate sample columns based on file type."""
+    required_columns = {
+        "PA0008": ["Pers.No.", "Amount"],
+        "PA0014": ["Pers.No.", "Amount"],
+        "HRP1000": ["OBJID", "STEXT"],
+        "HRP1001": ["OBJID", "SOBID"]
+    }
+    required = required_columns.get(source_type, [])
+
+    missing = [col for col in required if col not in df.columns]
+    if missing:
+        return False, ", ".join(missing)
+    return True, ""
 
 
 # 🔧 Default Destination Templates (for Foundation & Payroll)
@@ -204,7 +215,7 @@ def render_column_mapping_interface(mode: str):
 
     file_options = ["PA0008", "PA0014"] if mode == "payroll" else ["HRP1000", "HRP1001"]
     source_file = st.selectbox("Select source file type", file_options, key=f"column_map_src_{mode}")
-    regenerate_default_mapping(file_key, mode)
+    regenerate_default_mapping(source_file, mode)
     sample_path = os.path.join(paths["SAMPLES_DIR"], f"{source_file}_sample.csv")
     config_path = os.path.join(paths["CONFIG_DIR"], f"{source_file}_column_mapping.json")
 
