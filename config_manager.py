@@ -94,7 +94,7 @@ DEFAULT_TEMPLATES = {
         {"target_column1": "Unit of Measure", "target_column2": "Unit of Measure", "description": "Default: AUD"},
         {"target_column1": "Operation", "target_column2": "Operation", "description": ""}
     ]
-
+}
 # ✅ Template conversion helpers
 def convert_text_to_template(text_input: str) -> List[Dict]:
     lines = [line.strip() for line in text_input.split('\n') if line.strip()]
