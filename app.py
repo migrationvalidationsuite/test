@@ -3,7 +3,7 @@ import streamlit as st
 import base64
 from streamlit_option_menu import option_menu
 from foundation_module.foundation_app import render as render_foundation
-from payroll import app as payroll_app
+from payroll.app import render_payroll_tool
 from employeedata.app.data_migration_tool import render_employee_v2
 from config_manager import show_admin_panel
 
@@ -349,26 +349,30 @@ elif selected == "Launch Demo":
             next_page="employee_data_v2"
         )
 
-    elif st.session_state.demo_page == "payroll_data_tool":
-        back_col, _ = st.columns([1, 5])
-        with back_col:
-            if st.button("⬅ Back to Demo", key="back_from_payroll", use_container_width=True):
-                st.session_state.demo_page = "sap_to_sf"
-                st.session_state.tool_subpage = "Tool"  # 🔄 Reset to default
-                st.rerun()
-    
-        st.sidebar.markdown("---")
-        selected_radio = st.radio("Payroll Section:", ["Configuration Manager", "Tool"], key="payroll_radio")
-        st.session_state.tool_subpage = selected_radio
-    
-        if st.session_state.tool_subpage == "Tool":
-            payroll_app.render_payroll_tool()
-        else:
-            try:
-                show_admin_panel(mode="payroll")
-            except Exception as e:
-                st.error(f"Configuration Manager failed to load: {e}")
-    
+elif st.session_state.demo_page == "payroll_data_tool":
+    back_col, _ = st.columns([1, 5])
+    with back_col:
+        if st.button("⬅ Back to Demo", key="back_from_payroll", use_container_width=True):
+            st.session_state.demo_page = "sap_to_sf"
+            st.session_state.tool_subpage = "Tool"  # 🔄 Reset to default
+            st.rerun()
+
+    st.sidebar.markdown("---")
+    st.sidebar.header("Payroll Section")
+    section = st.sidebar.radio("Select Mode", ["Configuration Manager", "Tool"], key="payroll_radio")
+    st.session_state.tool_subpage = section
+
+    if section == "Configuration Manager":
+        try:
+            show_admin_panel(mode="payroll")
+        except Exception as e:
+            st.error(f"Configuration Manager failed to load: {e}")
+    else:
+        try:
+            render_payroll_tool()
+        except Exception as e:
+            st.error(f"Payroll Tool failed to load: {e}")
+
     
     elif st.session_state.demo_page == "foundation_data_view":
         back_col, _ = st.columns([1, 5])
