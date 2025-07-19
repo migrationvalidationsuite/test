@@ -2,16 +2,16 @@ import streamlit as st
 import pandas as pd
 import os
 import json
-from typing import List, Dict, Optional
 from pathlib import Path
+from typing import List, Dict, Optional
 
-# Directory bases
+# 🌐 Base directories for each mode
 BASE_DIR = {
     "foundation": "foundation_configs",
     "payroll": "payroll_configs"
 }
 
-# ✅ Get key paths for each mode
+# ✅ Get config paths
 def get_paths(mode: str) -> Optional[Dict[str, str]]:
     if mode not in BASE_DIR:
         st.error(f"❌ Invalid mode: {mode}")
@@ -22,82 +22,56 @@ def get_paths(mode: str) -> Optional[Dict[str, str]]:
         "PICKLIST_DIR": os.path.join(base, "picklists"),
         "SAMPLES_DIR": os.path.join(base, "source_samples")
     }
-def get_sample_path(file_type: str, sample_dir: str) -> str:
-    return os.path.join(sample_dir, f"{file_type}_sample.csv")
 
-# ✅ Setup directories if they don’t exist
-def initialize_directories(mode: str):
-    paths = get_paths(mode)
-    for path in paths.values():
-        Path(path).mkdir(parents=True, exist_ok=True)
-# ✅ Save uploaded sample file
-def process_uploaded_file(uploaded_file, source_file_type, mode):
+# ✅ Ensure directories exist
+def initialize_directories(mode: str) -> None:
     paths = get_paths(mode)
     if not paths:
         return
-    if uploaded_file is not None:
-        if uploaded_file.name.endswith(".csv"):
-            df = pd.read_csv(uploaded_file)
-        elif uploaded_file.name.endswith((".xls", ".xlsx")):
-            df = pd.read_excel(uploaded_file)
-        else:
-            st.error("Unsupported file format.")
+    for path in paths.values():
+        Path(path).mkdir(parents=True, exist_ok=True)
+# ✅ Upload and save sample files
+def handle_sample_upload(mode: str):
+    st.subheader("📁 Upload Sample Files")
+
+    source_options = ["PA0008", "PA0014"] if mode == "payroll" else ["HRP1000", "HRP1001"]
+    selected_file = st.radio("Choose file type:", source_options, horizontal=True, key=f"upload_type_{mode}")
+    
+    uploaded_file = st.file_uploader("Upload CSV or Excel", type=["csv", "xlsx"], key=f"{selected_file}_{mode}_upload")
+
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file) if uploaded_file.name.endswith(".csv") else pd.read_excel(uploaded_file)
+        paths = get_paths(mode)
+        if not paths:
+            st.error("❌ Invalid config path.")
             return
-        sample_path = os.path.join(paths["SAMPLES_DIR"], f"{source_file_type}_sample.csv")
+
+        sample_path = os.path.join(paths["SAMPLES_DIR"], f"{selected_file}.csv")
         df.to_csv(sample_path, index=False)
-        st.success(f"✅ {source_file_type} sample saved.")
+        st.success(f"✅ {selected_file} sample saved to {sample_path}")
 
-# ✅ Validate sample file (at least 1 column)
-def validate_sample_columns(file_type: str, df: pd.DataFrame) -> (bool, str):
-    if df.empty or df.columns.size == 0:
-        return False, "No columns found"
-    return True, ""
+        # Auto-generate destination template if not found
+        template_path = os.path.join(paths["CONFIG_DIR"], f"{selected_file}_destination_template.csv")
+        if not os.path.exists(template_path):
+            default_template = DEFAULT_TEMPLATES.get(selected_file, [])
+            if default_template:
+                pd.DataFrame(default_template).to_csv(template_path, index=False)
+                st.success(f"✅ Destination template created for {selected_file}")
 
-# 🔧 Default Destination Templates (for Foundation & Payroll)
-DEFAULT_TEMPLATES = {
-    "level": [
-        {"target_column1": "effectiveStartDate", "target_column2": "Start Date", "description": "Effective start date of the level"},
-        {"target_column1": "externalCode", "target_column2": "Code", "description": "Unique identifier for the level"},
-        {"target_column1": "name.en_US", "target_column2": "US English", "description": "Name in US English"},
-        {"target_column1": "name.defaultValue", "target_column2": "Default Value", "description": "Default name value"},
-        {"target_column1": "effectiveStatus", "target_column2": "Status", "description": "Current status (Active/Inactive)"},
-        {"target_column1": "headOfUnit", "target_column2": "Head of Unit", "description": "Person in charge of this unit"}
-    ],
-    "association": [
-        {"target_column1": "externalCode", "target_column2": "Code", "description": "Unique identifier for the association"},
-        {"target_column1": "effectiveStartDate", "target_column2": "Start Date", "description": "Effective start date"},
-        {"target_column1": "cust_toLegalEntity.externalCode", "target_column2": "Business Unit.Company", "description": "Legal entity reference"}
-    ],
-    "PA0008": [
-        {"target_column1": "Currency", "target_column2": "Crcy", "description": ""},
-        {"target_column1": "Start Date", "target_column2": "Start Date", "description": ""},
-        {"target_column1": "Frequency", "target_column2": "Frequency", "description": "Default: Hourly"},
-        {"target_column1": "Pay Component", "target_column2": "Wage type", "description": ""},
-        {"target_column1": "Sequence Number", "target_column2": "Sequence Number", "description": ""},
-        {"target_column1": "User ID", "target_column2": "Pers.No.", "description": ""},
-        {"target_column1": "Amount", "target_column2": "Amount", "description": ""},
-        {"target_column1": "End Date", "target_column2": "End Date", "description": ""},
-        {"target_column1": "Notes", "target_column2": "Notes", "description": ""},
-        {"target_column1": "Number of Units", "target_column2": "Number/unit", "description": ""},
-        {"target_column1": "Unit of Measure", "target_column2": "Unit of Measure", "description": "Default: AUD"},
-        {"target_column1": "Operation", "target_column2": "Operation", "description": ""}
-    ],
-    "PA0014": [
-        {"target_column1": "Currency", "target_column2": "Crcy", "description": ""},
-        {"target_column1": "Start Date", "target_column2": "Start Date", "description": ""},
-        {"target_column1": "Frequency", "target_column2": "Frequency", "description": "Default: BWK"},
-        {"target_column1": "Pay Component", "target_column2": "Wage type", "description": ""},
-        {"target_column1": "Sequence Number", "target_column2": "Sequence Number", "description": ""},
-        {"target_column1": "User ID", "target_column2": "Pers.No.", "description": ""},
-        {"target_column1": "Amount", "target_column2": "Amount", "description": ""},
-        {"target_column1": "End Date", "target_column2": "End Date", "description": ""},
-        {"target_column1": "Notes", "target_column2": "Notes", "description": ""},
-        {"target_column1": "Number of Units", "target_column2": "Number/unit", "description": ""},
-        {"target_column1": "Unit of Measure", "target_column2": "Unit of Measure", "description": "Default: AUD"},
-        {"target_column1": "Operation", "target_column2": "Operation", "description": ""}
-    ]
-}
-# ✅ Template conversion helpers
+        # Auto-generate column mapping if not found
+        mapping_path = os.path.join(paths["CONFIG_DIR"], f"{selected_file}_column_mapping.json")
+        if not os.path.exists(mapping_path):
+            default_mapping = [
+                {
+                    "source_column": col,
+                    "destination_column": col,
+                    "transformation": "None"
+                } for col in df.columns
+            ]
+            with open(mapping_path, "w") as f:
+                json.dump(default_mapping, f, indent=2)
+            st.success(f"✅ Column mapping file created for {selected_file}")
+# ✅ Text ⇄ Template Conversion
 def convert_text_to_template(text_input: str) -> List[Dict]:
     lines = [line.strip() for line in text_input.split('\n') if line.strip()]
     template = []
@@ -113,13 +87,13 @@ def convert_text_to_template(text_input: str) -> List[Dict]:
 
 def convert_template_to_text(template: List[Dict]) -> str:
     return '\n'.join([
-        f"{item['target_column1']},{item['target_column2']},{item.get('description', '')}"
-        for item in template
+        f"{row['target_column1']},{row['target_column2']},{row.get('description', '')}" for row in template
     ])
 
 # ✅ Picklist Management UI
 def manage_picklists(mode: str):
     st.subheader("📚 Picklist Management")
+
     paths = get_paths(mode)
     picklist_dir = paths["PICKLIST_DIR"]
     os.makedirs(picklist_dir, exist_ok=True)
@@ -129,13 +103,14 @@ def manage_picklists(mode: str):
         save_path = os.path.join(picklist_dir, uploaded.name)
         with open(save_path, "wb") as f:
             f.write(uploaded.getbuffer())
-        st.success(f"Uploaded: {uploaded.name}")
+        st.success(f"✅ Uploaded: {uploaded.name}")
         st.rerun()
 
     picklist_files = [f for f in os.listdir(picklist_dir) if f.endswith(".csv")]
     if picklist_files:
         selected = st.selectbox("Edit Picklist", picklist_files, key=f"picklist_select_{mode}")
         file_path = os.path.join(picklist_dir, selected)
+
         try:
             df = pd.read_csv(file_path)
             edited = st.data_editor(df, num_rows="dynamic", use_container_width=True)
@@ -143,17 +118,17 @@ def manage_picklists(mode: str):
                 edited.to_csv(file_path, index=False)
                 st.success(f"{selected} saved.")
         except Exception as e:
-            st.error(f"Could not read file: {e}")
+            st.error(f"⚠️ Could not read file: {e}")
     else:
         st.info("No picklists found.")
-
-def render_template_editor(template_type: str, mode: str) -> None:
+# ✅ Destination Template Editor
+def render_template_editor(template_type: str, mode: str):
     st.subheader(f"🧾 Destination Template – {template_type}")
     paths = get_paths(mode)
     config_path = os.path.join(paths["CONFIG_DIR"], f"{template_type}_destination_template.json")
     default_template = DEFAULT_TEMPLATES.get(template_type.lower(), [])
 
-    # Load or fallback to default
+    # Load existing or default
     if os.path.exists(config_path):
         try:
             with open(config_path, "r") as f:
@@ -188,8 +163,7 @@ def render_template_editor(template_type: str, mode: str) -> None:
         if st.button("💾 Save Template", key=f"save_temp_btn_{template_type}_{mode}"):
             with open(config_path, "w") as f:
                 json.dump(st.session_state[f"{template_type}_template_{mode}"], f, indent=2)
-            st.success("Template saved.")
-
+            st.success("✅ Template saved.")
     else:
         text = st.text_area("Template CSV format", convert_template_to_text(st.session_state[f"{template_type}_template_{mode}"]), height=250)
         if st.button("Apply Text", key=f"apply_txt_{template_type}_{mode}"):
@@ -225,7 +199,7 @@ def render_column_mapping_interface(mode: str):
         st.error(f"Error reading sample: {e}")
         return
 
-    # Load or init
+    # Load or init mapping
     if f"mapping_{source_file}_{mode}" not in st.session_state:
         if os.path.exists(config_path):
             try:
@@ -314,7 +288,6 @@ def show_admin_panel(mode: str = "foundation") -> None:
                     json.dump(default_mapping, f, indent=4)
                 st.success(f"✅ Column mapping file generated for {selected_file_type}")
 
-
     with tab2:
         template_type = st.radio("Select Template Type", source_options if mode == "payroll" else ["Level", "Association"], horizontal=True, key=f"template_type_{mode}")
         render_template_editor(template_type, mode)
@@ -356,13 +329,3 @@ def regenerate_default_mapping(file_key: str, mode: str) -> None:
     if not os.path.exists(path):
         with open(path, "w") as f:
             json.dump([], f, indent=2)
-# ✅ Transformation options used in Column Mapping
-TRANSFORMATION_LIBRARY = {
-    "None": lambda x: x,
-    "Uppercase": lambda x: str(x).upper() if pd.notna(x) else x,
-    "Lowercase": lambda x: str(x).lower() if pd.notna(x) else x,
-    "Trim Spaces": lambda x: str(x).strip() if pd.notna(x) else x,
-    "To Integer": lambda x: int(x) if pd.notna(x) and str(x).isdigit() else x,
-    "To Float": lambda x: float(x) if pd.notna(x) else x,
-    "Date Only": lambda x: str(x).split(" ")[0] if pd.notna(x) and isinstance(x, str) else x,
-}
