@@ -148,7 +148,7 @@ def validate_sample_columns(source_file: str, sample_df: pd.DataFrame) -> tuple:
         "HRP1000": ["Object ID", "Name", "Start date"],
         "HRP1001": ["Source ID", "Target object ID", "Start date"],
         "PA0008": ["Employee ID", "Pay Scale Type"],   # 🔁 Update as needed
-        "PA0014": ["UserID", "Deduction Code"]         # 🔁 Update as needed
+        "PA0014": ["Pers.No.", "Wage type", "Start Date", "Amount"]
     }
 
     if source_file not in required:
