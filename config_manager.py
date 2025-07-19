@@ -345,6 +345,16 @@ def show_admin_panel(mode: str = "foundation") -> None:
         "🗃️ Picklist Management",
         "🔄 Column Mapping"
     ])
+def save_template(template_df: pd.DataFrame, file_key: str, mode: str):
+    path = os.path.join(f"{mode}_configs", "configs", f"{file_key}_destination_template.csv")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    template_df.to_csv(path, index=False)
+
+def save_column_mapping(mapping: List[Dict], file_key: str, mode: str):
+    path = os.path.join(f"{mode}_configs", "configs", f"{file_key}_column_mapping.json")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(mapping, f, indent=2)
 
     with tab1:
         st.subheader("📁 Upload Sample Files")
