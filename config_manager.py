@@ -30,6 +30,19 @@ def get_paths(mode: str) -> Optional[Dict[str, str]]:
         "PICKLIST_DIR": os.path.join(base, "picklists"),
         "SAMPLES_DIR": os.path.join(base, "source_samples")
     }
+def process_uploaded_file(uploaded_file, source_file_type, mode):
+    """Save uploaded sample file as CSV in the correct directory."""
+    if uploaded_file is not None:
+        df = None
+        if uploaded_file.name.endswith(".csv"):
+            df = pd.read_csv(uploaded_file)
+        elif uploaded_file.name.endswith((".xls", ".xlsx")):
+            df = pd.read_excel(uploaded_file)
+
+        if df is not None:
+            path = get_sample_path(source_file_type, mode)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            df.to_csv(path, index=False)
 
 # Initialize folders
 def initialize_directories(mode: str) -> None:
