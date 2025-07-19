@@ -50,7 +50,7 @@ def process_uploaded_file(uploaded_file, source_file_type, mode):
             os.makedirs(os.path.dirname(path), exist_ok=True)
             df.to_csv(path, index=False)
 
-def validate_sample_columns(df: pd.DataFrame) -> bool:
+def validate_sample_columns(df: pd.DataFrame, source_file_type: str) -> bool:
     """Ensure the uploaded sample file has at least one column."""
     return not df.empty and df.columns.size > 0
 # ✅ Fixed Picklist Management
