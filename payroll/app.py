@@ -84,6 +84,34 @@ def render_payroll_tool():
         df = pd.read_csv(uploaded_file) if uploaded_file.name.endswith(".csv") else pd.read_excel(uploaded_file)
         st.session_state["payroll_data"][selected_file] = df
         st.success(f"✅ {selected_file} uploaded successfully")
+        
+        # 🔄 Save sample to source_samples
+        sample_path = os.path.join(paths["SAMPLES_DIR"], f"{selected_file}.csv")
+        df.to_csv(sample_path, index=False)
+
+        # 🔄 Regenerate destination template if not found
+        template_path = os.path.join(paths["CONFIG_DIR"], f"{selected_file}_destination_template.csv")
+        if not os.path.exists(template_path):
+            if selected_file in DEFAULT_TEMPLATES:
+                default_template = pd.DataFrame(DEFAULT_TEMPLATES[selected_file])
+                default_template.to_csv(template_path, index=False)
+                st.success(f"✅ Destination template generated for {selected_file}")
+            else:
+                st.warning(f"No default template found for {selected_file}")
+
+        # 🔄 Regenerate column mapping if not found
+        mapping_path = os.path.join(paths["CONFIG_DIR"], f"{selected_file}_column_mapping.json")
+        if not os.path.exists(mapping_path):
+            default_mapping = [
+                {
+                    "source_column": col,
+                    "destination_column": col,
+                    "transformation": "None"
+                } for col in df.columns
+            ]
+            with open(mapping_path, "w") as f:
+                json.dump(default_mapping, f, indent=2)
+            st.success(f"✅ Column mapping created for {selected_file}")
 
     with st.sidebar:
         st.header("Cleansing Options")
@@ -109,6 +137,7 @@ def render_payroll_tool():
             "🧹 Cleaned & Mapped", "✅ Validation", "📊 Dashboard",
             "📈 Stats", "⬇ Download", "🛠️ Admin"
         ])
+
         with tab1:
             st.subheader("🔍 Transformed Data Preview")
             st.dataframe(transformed_df.head())
