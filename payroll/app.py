@@ -4,7 +4,7 @@ import os
 import json
 from io import BytesIO
 import plotly.express as px
-from config_manager import get_paths, TRANSFORMATION_LIBRARY, show_admin_panel
+from config_manager import get_paths, show_admin_panel
 
 # Initialize session state
 def init_session():
