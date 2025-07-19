@@ -66,6 +66,34 @@ DEFAULT_TEMPLATES = {
         {"target_column1": "externalCode", "target_column2": "Code", "description": "Unique identifier for the association"},
         {"target_column1": "effectiveStartDate", "target_column2": "Start Date", "description": "Effective start date"},
         {"target_column1": "cust_toLegalEntity.externalCode", "target_column2": "Business Unit.Company", "description": "Legal entity reference"}
+    ],
+    "PA0008": [
+        {"target_column1": "Currency", "target_column2": "Crcy", "description": ""},
+        {"target_column1": "Start Date", "target_column2": "Start Date", "description": ""},
+        {"target_column1": "Frequency", "target_column2": "Frequency", "description": "Default: Hourly"},
+        {"target_column1": "Pay Component", "target_column2": "Wage type", "description": ""},
+        {"target_column1": "Sequence Number", "target_column2": "Sequence Number", "description": ""},
+        {"target_column1": "User ID", "target_column2": "Pers.No.", "description": ""},
+        {"target_column1": "Amount", "target_column2": "Amount", "description": ""},
+        {"target_column1": "End Date", "target_column2": "End Date", "description": ""},
+        {"target_column1": "Notes", "target_column2": "Notes", "description": ""},
+        {"target_column1": "Number of Units", "target_column2": "WkHrs", "description": ""},
+        {"target_column1": "Unit of Measure", "target_column2": "Unit of Measure", "description": "Default: AUD"},
+        {"target_column1": "Operation", "target_column2": "Operation", "description": ""}
+    ],
+    "PA0014": [
+        {"target_column1": "Currency", "target_column2": "Crcy", "description": ""},
+        {"target_column1": "Start Date", "target_column2": "Start Date", "description": ""},
+        {"target_column1": "Frequency", "target_column2": "Frequency", "description": "Default: BWK"},
+        {"target_column1": "Pay Component", "target_column2": "Wage type", "description": ""},
+        {"target_column1": "Sequence Number", "target_column2": "Sequence Number", "description": ""},
+        {"target_column1": "User ID", "target_column2": "Pers.No.", "description": ""},
+        {"target_column1": "Amount", "target_column2": "Amount", "description": ""},
+        {"target_column1": "End Date", "target_column2": "End Date", "description": ""},
+        {"target_column1": "Notes", "target_column2": "Notes", "description": ""},
+        {"target_column1": "Number of Units", "target_column2": "Number/unit", "description": ""},
+        {"target_column1": "Unit of Measure", "target_column2": "Unit of Measure", "description": "Default: AUD"},
+        {"target_column1": "Operation", "target_column2": "Operation", "description": ""}
     ]
 }
 
