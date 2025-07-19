@@ -280,17 +280,34 @@ def show_admin_panel(mode: str = "foundation") -> None:
 
         uploaded_file = st.file_uploader("Upload CSV or Excel", type=["csv", "xlsx"], key=f"{source_type}_{mode}_upload")
         if uploaded_file:
-            process_uploaded_file(uploaded_file, source_type, mode)
+            df = pd.read_csv(uploaded_file) if uploaded_file.name.endswith(".csv") else pd.read_excel(uploaded_file)
+            df.to_csv(sample_path, index=False)
+            st.success(f"{selected_file_type} sample saved to {sample_path}.")
+        
+            # ✅ Auto-regenerate destination template if not found
+            dest_template_path = os.path.join(paths["CONFIG_DIR"], f"{selected_file_type}_destination_template.csv")
+            if not os.path.exists(dest_template_path):
+                if selected_file_type in DEFAULT_TEMPLATES:
+                    default_template_df = pd.DataFrame(DEFAULT_TEMPLATES[selected_file_type])
+                    default_template_df.to_csv(dest_template_path, index=False)
+                    st.success(f"✅ Destination template generated for {selected_file_type}")
+                else:
+                    st.warning(f"No default template found for {selected_file_type}")
+        
+            # ✅ Auto-regenerate column mapping if not found
+            mapping_path = os.path.join(paths["CONFIG_DIR"], f"{selected_file_type}_column_mapping.json")
+            if not os.path.exists(mapping_path):
+                default_mapping = [
+                    {
+                        "source_column": col,
+                        "destination_column": col,
+                        "transformation": "None"
+                    } for col in df.columns
+                ]
+                with open(mapping_path, "w") as f:
+                    json.dump(default_mapping, f, indent=4)
+                st.success(f"✅ Column mapping file generated for {selected_file_type}")
 
-        sample_path = get_sample_path(source_type, mode)
-        if os.path.exists(sample_path):
-            try:
-                df = pd.read_csv(sample_path, nrows=MAX_SAMPLE_ROWS)
-                st.success(f"✅ {source_type} Sample Loaded")
-                is_valid = validate_sample_columns(df)
-                st.success("✔ Columns valid") if is_valid else st.error("⚠️ No columns found.")
-            except Exception as e:
-                st.error(f"⚠️ Failed to read sample: {e}")
 
     with tab2:
         template_type = st.radio("Select Template Type", source_options if mode == "payroll" else ["Level", "Association"], horizontal=True, key=f"template_type_{mode}")
