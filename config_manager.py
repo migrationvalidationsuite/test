@@ -97,6 +97,10 @@ DEFAULT_TEMPLATES = {
     ]
 }
 
+if st.button("Reset to Default Templates"):
+    default_template = DEFAULT_TEMPLATES.get(template_type_key, [])
+    st.session_state[f"{template_type_key}_template_{mode}"] = default_template
+
 def safe_get_sample_value(col_data: pd.Series) -> str:
     if len(col_data) > 0:
         sample = col_data.iloc[0]
