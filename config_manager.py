@@ -345,26 +345,16 @@ def show_admin_panel(mode: str = "foundation") -> None:
         "🗃️ Picklist Management",
         "🔄 Column Mapping"
     ])
-def save_template(template_df: pd.DataFrame, file_key: str, mode: str):
-    path = os.path.join(f"{mode}_configs", "configs", f"{file_key}_destination_template.csv")
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    template_df.to_csv(path, index=False)
-
-def save_column_mapping(mapping: List[Dict], file_key: str, mode: str):
-    path = os.path.join(f"{mode}_configs", "configs", f"{file_key}_column_mapping.json")
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, "w") as f:
-        json.dump(mapping, f, indent=2)
 
     with tab1:
         st.subheader("📁 Upload Sample Files")
         source_options = ["PA0008", "PA0014"] if mode == "payroll" else ["HRP1000", "HRP1001"]
         source_type = st.radio("Choose file type:", source_options, horizontal=True, key=f"src_type_{mode}")
-        
+
         uploaded_file = st.file_uploader("Upload CSV or Excel", type=["csv", "xlsx"], key=f"{source_type}_{mode}_upload")
         if uploaded_file:
             process_uploaded_file(uploaded_file, source_type, mode)
-    
+
         sample_path = get_sample_path(source_type, mode)
         if os.path.exists(sample_path):
             try:
@@ -375,13 +365,8 @@ def save_column_mapping(mapping: List[Dict], file_key: str, mode: str):
             except Exception as e:
                 st.error(f"⚠️ Failed to read sample: {e}")
 
-
     with tab2:
-        if mode == "payroll":
-            template_options = ["PA0008", "PA0014"]
-        else:
-            template_options = ["Level", "Association"]
-
+        template_options = ["PA0008", "PA0014"] if mode == "payroll" else ["Level", "Association"]
         template_type = st.radio("Select Template Type", template_options, horizontal=True, key=f"template_type_{mode}")
         render_template_editor(template_type, mode)
 
@@ -390,3 +375,16 @@ def save_column_mapping(mapping: List[Dict], file_key: str, mode: str):
 
     with tab4:
         render_column_mapping_interface(mode)
+
+
+# Place helper functions OUTSIDE show_admin_panel
+def save_template(template_df: pd.DataFrame, file_key: str, mode: str):
+    path = os.path.join(f"{mode}_configs", "configs", f"{file_key}_destination_template.csv")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    template_df.to_csv(path, index=False)
+
+def save_column_mapping(mapping: List[Dict], file_key: str, mode: str):
+    path = os.path.join(f"{mode}_configs", "configs", f"{file_key}_column_mapping.json")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(mapping, f, indent=2)
