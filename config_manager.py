@@ -54,31 +54,7 @@ def validate_sample_columns(df: pd.DataFrame) -> bool:
     """Ensure the uploaded sample file has at least one column."""
     return isinstance(df, pd.DataFrame) and not df.empty and len(df.columns) > 0
 
-# ✅ Fixed Picklist Management
-def manage_picklists(mode: str):
-    st.subheader("📌 Picklist Management")
 
-    paths = get_paths(mode)
-    picklist_dir = paths["PICKLIST_DIR"]
-    os.makedirs(picklist_dir, exist_ok=True)
-
-    picklist_files = [f for f in os.listdir(picklist_dir) if f.endswith(".csv")]
-
-    selected_file = st.selectbox("Select a picklist to view/edit", picklist_files) if picklist_files else None
-
-    if selected_file:
-        file_path = os.path.join(picklist_dir, selected_file)
-        try:
-            df = pd.read_csv(file_path)
-            edited_df = st.data_editor(df, use_container_width=True, num_rows="dynamic")
-
-            if st.button("💾 Save Picklist", key=f"save_picklist_{mode}_{selected_file}"):
-                edited_df.to_csv(file_path, index=False)
-                st.success(f"✅ Picklist '{selected_file}' saved successfully.")
-        except Exception as e:
-            st.error(f"Error reading '{selected_file}': {e}")
-    else:
-        st.info("No picklists found. Upload or create one manually.")
 # 🔧 Default Destination Templates (for Foundation & Payroll)
 DEFAULT_TEMPLATES = {
     "level": [
@@ -144,6 +120,7 @@ def convert_template_to_text(template: List[Dict]) -> str:
     ])
 
 def render_template_editor(template_type: str, mode: str) -> None:
+    regenerate_default_template(template_type, mode)
     st.subheader(f"{template_type} Template Configuration")
 
     paths = get_paths(mode)
@@ -227,6 +204,7 @@ def render_column_mapping_interface(mode: str):
 
     file_options = ["PA0008", "PA0014"] if mode == "payroll" else ["HRP1000", "HRP1001"]
     source_file = st.selectbox("Select source file type", file_options, key=f"column_map_src_{mode}")
+    regenerate_default_mapping(file_key, mode)
     sample_path = os.path.join(paths["SAMPLES_DIR"], f"{source_file}_sample.csv")
     config_path = os.path.join(paths["CONFIG_DIR"], f"{source_file}_column_mapping.json")
 
@@ -388,3 +366,22 @@ def save_column_mapping(mapping: List[Dict], file_key: str, mode: str):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, "w") as f:
         json.dump(mapping, f, indent=2)
+def save_picklist(df: pd.DataFrame, filename: str, mode: str):
+    path = os.path.join(f"{mode}_configs", "picklists", filename)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    df.to_csv(path, index=False)
+def regenerate_default_template(file_key: str, mode: str) -> None:
+    """Regenerate a blank default destination template if none exists."""
+    path = os.path.join(f"{mode}_configs", "configs", f"{file_key}_destination_template.csv")
+    if not os.path.exists(path):
+        df = pd.DataFrame(columns=["destination_column", "data_type", "default_value", "description"])
+        df.to_csv(path, index=False)
+
+def regenerate_default_mapping(file_key: str, mode: str) -> None:
+    """Regenerate a blank default column mapping if none exists."""
+    path = os.path.join(f"{mode}_configs", "configs", f"{file_key}_column_mapping.json")
+    if not os.path.exists(path):
+        default_mapping = []
+        with open(path, "w") as f:
+            json.dump(default_mapping, f, indent=2)
+
