@@ -143,13 +143,22 @@ def save_config(config_type: str, config_data: Union[Dict, List], mode: str) -> 
     except Exception as e:
         st.error(f"[{mode}] Error saving config: {str(e)}")
 def validate_sample_columns(source_file: str, sample_df: pd.DataFrame) -> tuple:
-    """Validate required columns exist in sample."""
+    """Validate required columns exist in uploaded source sample."""
     required = {
         "HRP1000": ["Object ID", "Name", "Start date"],
         "HRP1001": ["Source ID", "Target object ID", "Start date"],
-        "PA0008": ["Employee", "Wage Type", "Amount"],  # replace with your real required cols
-        "PA0014": ["Employee", "Deduction Type", "Start Date"]
+        "PA0008": ["Employee ID", "Pay Scale Type"],   # 🔁 Update as needed
+        "PA0014": ["UserID", "Deduction Code"]         # 🔁 Update as needed
     }
+
+    if source_file not in required:
+        return True, []
+
+    missing = set(required[source_file]) - set(sample_df.columns)
+    if missing:
+        return False, list(missing)
+    return True, []
+
 
     missing = set(required.get(source_file, [])) - set(sample_df.columns)
     return (False, f"Missing required: {', '.join(missing)}") if missing else (True, "Valid columns")
