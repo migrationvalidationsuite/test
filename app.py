@@ -349,30 +349,29 @@ elif selected == "Launch Demo":
             next_page="employee_data_v2"
         )
 
-elif st.session_state.demo_page == "payroll_data_tool":
-    back_col, _ = st.columns([1, 5])
-    with back_col:
-        if st.button("⬅ Back to Demo", key="back_from_payroll", use_container_width=True):
-            st.session_state.demo_page = "sap_to_sf"
-            st.session_state.tool_subpage = "Tool"  # 🔄 Reset to default
-            st.rerun()
-
-    st.sidebar.markdown("---")
-    st.sidebar.header("Payroll Section")
-    section = st.sidebar.radio("Select Mode", ["Configuration Manager", "Tool"], key="payroll_radio")
-    st.session_state.tool_subpage = section
-
-    if section == "Configuration Manager":
-        try:
-            show_admin_panel(mode="payroll")
-        except Exception as e:
-            st.error(f"Configuration Manager failed to load: {e}")
-    else:
-        try:
-            render_payroll_tool()
-        except Exception as e:
-            st.error(f"Payroll Tool failed to load: {e}")
-
+    elif st.session_state.demo_page == "payroll_data_tool":
+        back_col, _ = st.columns([1, 5])
+        with back_col:
+            if st.button("⬅ Back to Demo", key="back_from_payroll", use_container_width=True):
+                st.session_state.demo_page = "sap_to_sf"
+                st.session_state.tool_subpage = "Tool"  # 🔄 Reset to default
+                st.rerun()
+    
+        st.sidebar.markdown("---")
+        st.sidebar.header("Payroll Section")
+        section = st.sidebar.radio("Select Mode", ["Configuration Manager", "Tool"], key="payroll_radio")
+        st.session_state.tool_subpage = section
+    
+        if section == "Configuration Manager":
+            try:
+                show_admin_panel(mode="payroll")
+            except Exception as e:
+                st.error(f"Configuration Manager failed to load: {e}")
+        else:
+            try:
+                render_payroll_tool()
+            except Exception as e:
+                st.error(f"Payroll Tool failed to load: {e}")
     
     elif st.session_state.demo_page == "foundation_data_view":
         back_col, _ = st.columns([1, 5])
