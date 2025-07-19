@@ -276,14 +276,20 @@ def show_admin_panel(mode: str = "foundation") -> None:
     with tab1:
         st.subheader("📁 Upload Sample Files")
         source_options = ["PA0008", "PA0014"] if mode == "payroll" else ["HRP1000", "HRP1001"]
-        source_type = st.radio("Choose file type:", source_options, horizontal=True, key=f"src_type_{mode}")
-
-        uploaded_file = st.file_uploader("Upload CSV or Excel", type=["csv", "xlsx"], key=f"{source_type}_{mode}_upload")
-        if uploaded_file:
+        selected_file_type = st.radio("Choose file type:", source_options, horizontal=True, key=f"src_type_{mode}")
+    
+        uploaded_file = st.file_uploader("Upload CSV or Excel", type=["csv", "xlsx"], key=f"{selected_file_type}_{mode}_upload")
+        
+        paths = get_paths(mode)
+        if not paths:
+            st.error("Invalid mode paths.")
+        elif uploaded_file:
             df = pd.read_csv(uploaded_file) if uploaded_file.name.endswith(".csv") else pd.read_excel(uploaded_file)
+            
+            sample_path = os.path.join(paths["SAMPLES_DIR"], f"{selected_file_type}.csv")
             df.to_csv(sample_path, index=False)
             st.success(f"{selected_file_type} sample saved to {sample_path}.")
-        
+    
             # ✅ Auto-regenerate destination template if not found
             dest_template_path = os.path.join(paths["CONFIG_DIR"], f"{selected_file_type}_destination_template.csv")
             if not os.path.exists(dest_template_path):
@@ -293,7 +299,7 @@ def show_admin_panel(mode: str = "foundation") -> None:
                     st.success(f"✅ Destination template generated for {selected_file_type}")
                 else:
                     st.warning(f"No default template found for {selected_file_type}")
-        
+    
             # ✅ Auto-regenerate column mapping if not found
             mapping_path = os.path.join(paths["CONFIG_DIR"], f"{selected_file_type}_column_mapping.json")
             if not os.path.exists(mapping_path):
