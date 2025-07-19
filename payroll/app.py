@@ -1,88 +1,89 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
-import plotly.express as px
-import json
 import os
-from typing import Dict
-from config_manager import show_admin_panel 
+import json
+from io import BytesIO
+import plotly.express as px
+from config_manager import get_paths, TRANSFORMATION_LIBRARY, show_admin_panel
 
-# ---------------- Utility Functions ----------------
-
-def load_mappings(file_key, mode="payroll"):
-    path = f"{mode}_configs/configs/{file_key}_column_mapping.json"
-    if os.path.exists(path):
-        with open(path, "r") as f:
+# Initialize session state
+def init_session():
+    for key, default in {
+        "payroll_raw": {},
+        "payroll_cleaned": {},
+        "payroll_transformed": {},
+    }.items():
+        if key not in st.session_state:
+            st.session_state[key] = default
+def load_mapping(file_key, mode="payroll"):
+    config_path = os.path.join(get_paths(mode)["CONFIG_DIR"], f"{file_key}_column_mapping.json")
+    if os.path.exists(config_path):
+        with open(config_path, "r") as f:
             return json.load(f)
     return []
 
-def load_picklists(mode: str) -> Dict[str, pd.DataFrame]:
-    picklists = {}
-    picklist_dir = os.path.join(f"{mode}_configs", "picklists")
-    if os.path.exists(picklist_dir):
-        for file in os.listdir(picklist_dir):
-            if file.endswith(".csv"):
-                try:
-                    df = pd.read_csv(os.path.join(picklist_dir, file))
-                    picklists[file] = df
-                except:
-                    continue
-    return picklists
-
-def apply_picklist_lookup(value, picklist_df, column_name):
-    try:
-        match = picklist_df[picklist_df[column_name] == value]
-        if not match.empty:
-            return match.iloc[0][1]
-    except:
-        pass
-    return value
-
-def apply_transformations(df, mappings, picklists=None):
-    df_out = df.copy()
-    for trans in mappings:
-        src_col = trans["source_column"]
-        dst_col = trans["destination_column"]
-        trans_type = trans.get("transformation", "None")
-
-        if trans_type == "None":
-            df_out[dst_col] = df[src_col]
-        elif trans_type == "UPPERCASE":
-            df_out[dst_col] = df[src_col].astype(str).str.upper()
-        elif trans_type == "lowercase":
-            df_out[dst_col] = df[src_col].astype(str).str.lower()
-        elif trans_type == "Trim Whitespace":
-            df_out[dst_col] = df[src_col].astype(str).str.strip()
-        elif trans_type == "Title Case":
-            df_out[dst_col] = df[src_col].astype(str).str.title()
-        elif trans_type == "Date Format (YYYY-MM-DD)":
-            df_out[dst_col] = pd.to_datetime(df[src_col], errors="coerce").dt.strftime('%Y-%m-%d')
-        elif trans_type == "Lookup Value" and picklists:
-            for name, pick_df in picklists.items():
-                if src_col in pick_df.columns:
-                    df_out[dst_col] = df[src_col].apply(lambda x: apply_picklist_lookup(x, pick_df, src_col))
-                    break
-            else:
-                df_out[dst_col] = df[src_col]
-        else:
-            df_out[dst_col] = df[src_col]
-    return df_out
+def load_template(file_key, mode="payroll"):
+    template_path = os.path.join(get_paths(mode)["CONFIG_DIR"], f"{file_key}_destination_template.csv")
+    if os.path.exists(template_path):
+        return pd.read_csv(template_path)
+    return pd.DataFrame()
 
 def cleanse_dataframe(df, trim=True, lower=True, empty_nan=True, drop_null=False):
-    df_clean = df.copy()
-    for col in df_clean.select_dtypes(include='object'):
-        if trim:
-            df_clean[col] = df_clean[col].astype(str).str.strip()
-        if lower:
-            df_clean[col] = df_clean[col].astype(str).str.lower()
+    df = df.copy()
+    if trim:
+        df = df.applymap(lambda x: str(x).strip() if isinstance(x, str) else x)
+    if lower:
+        df = df.applymap(lambda x: str(x).lower() if isinstance(x, str) else x)
     if empty_nan:
-        df_clean.replace("", np.nan, inplace=True)
+        df.replace("", pd.NA, inplace=True)
     if drop_null:
-        df_clean.dropna(inplace=True)
-    return df_clean
+        df.dropna(how="all", inplace=True)
+    return df
 
+def apply_transformation(value, transformation):
+    try:
+        if transformation == "None":
+            return value
+        elif transformation == "UPPERCASE":
+            return str(value).upper()
+        elif transformation == "lowercase":
+            return str(value).lower()
+        elif transformation == "Title Case":
+            return str(value).title()
+        elif transformation == "Trim Whitespace":
+            return str(value).strip()
+        elif transformation == "Date Format (YYYY-MM-DD)":
+            return pd.to_datetime(value).strftime("%Y-%m-%d")
+        else:
+            return value
+    except:
+        return value
+
+def apply_transformations(df, mappings):
+    transformed_rows = []
+    for _, row in df.iterrows():
+        new_row = {}
+        for map_item in mappings:
+            src = map_item.get("source_column")
+            dst = map_item.get("destination_column")
+            transformation = map_item.get("transformation", "None")
+            value = row.get(src, "")
+            new_row[dst] = apply_transformation(value, transformation)
+        transformed_rows.append(new_row)
+    return pd.DataFrame(transformed_rows)
 def render_payroll_tool():
-    st.title("📄 Enhanced Payroll Tool with Config Manager")
+    st.title("💰 Enhanced Payroll Mapping Tool")
+    mode = "payroll"
+    paths = get_paths(mode)
+
+    file_options = ["PA0008", "PA0014"]
+    selected_file = st.radio("Select Payroll File Type", file_options, horizontal=True)
+
+    uploaded_file = st.file_uploader(f"Upload {selected_file} file", type=["csv", "xlsx"], key=f"{selected_file}_upload")
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file) if uploaded_file.name.endswith(".csv") else pd.read_excel(uploaded_file)
+        st.session_state["payroll_data"][selected_file] = df
+        st.success(f"✅ {selected_file} uploaded successfully")
 
     with st.sidebar:
         st.header("Cleansing Options")
@@ -91,82 +92,127 @@ def render_payroll_tool():
         empty_nan = st.checkbox("Empty → NaN", True)
         drop_null = st.checkbox("Drop Null Rows", False)
 
-    uploaded_0008 = st.file_uploader("Upload PA0008.xlsx", type=["xlsx"], key="upload_0008")
-    uploaded_0014 = st.file_uploader("Upload PA0014.xlsx", type=["xlsx"], key="upload_0014")
+    mappings = load_mapping(selected_file, mode)
+    template = load_template(selected_file, mode)
 
-    mappings_0008 = load_mappings("PA0008")
-    mappings_0014 = load_mappings("PA0014")
-    picklists = load_picklists("payroll")
+    if not mappings or template.empty:
+        st.warning("⚠️ Missing mapping or template. Please configure in Admin Panel.")
+        return
 
-    if uploaded_0008 and uploaded_0014:
-        df_8_raw = pd.read_excel(uploaded_0008)
-        df_14_raw = pd.read_excel(uploaded_0014)
+    if selected_file in st.session_state["payroll_data"]:
+        raw_df = st.session_state["payroll_data"][selected_file]
+        cleansed_df = cleanse_dataframe(raw_df, trim, lower, empty_nan, drop_null)
+        transformed_df = apply_transformations(cleansed_df, mappings)
+        st.session_state["transformed_data"][selected_file] = transformed_df
 
-        df_8_clean = cleanse_dataframe(df_8_raw, trim, lower, empty_nan, drop_null)
-        df_14_clean = cleanse_dataframe(df_14_raw, trim, lower, empty_nan, drop_null)
+        tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
+            "🧹 Cleaned & Mapped", "✅ Validation", "📊 Dashboard",
+            "📈 Stats", "⬇ Download", "🛠️ Admin"
+        ])
+        with tab1:
+            st.subheader("🔍 Transformed Data Preview")
+            st.dataframe(transformed_df.head())
 
-        df_8_transformed = apply_transformations(df_8_clean, mappings_0008, picklists)
-        df_14_transformed = apply_transformations(df_14_clean, mappings_0014, picklists)
-    else:
-        df_8_transformed, df_14_transformed = pd.DataFrame(), pd.DataFrame()
+        with tab2:
+            st.subheader("✅ Null Summary")
+            null_summary = transformed_df.isnull().sum().reset_index()
+            null_summary.columns = ["Column", "Null Count"]
+            st.dataframe(null_summary)
 
-    # ✅ Add Admin tab to tabs list
-    tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
-        "🧹 Cleaned & Mapped", "✅ Validation", "📊 Dashboard",
-        "📈 Stats", "⬇ Download", "💬 Ask Your Data", "🛠️ Admin"
-    ])
-
-    with tab1:
-        st.subheader("PA0008 – Transformed")
-        st.dataframe(df_8_transformed, use_container_width=True)
-        st.subheader("PA0014 – Transformed")
-        st.dataframe(df_14_transformed, use_container_width=True)
-
-    with tab2:
-        st.subheader("Null Summary – PA0008")
-        st.dataframe(df_8_transformed.isnull().sum().reset_index().rename(columns={0: "Nulls", "index": "Column"}))
-        if "amount" in df_8_transformed.columns:
-            st.subheader("Negative Amounts")
-            st.dataframe(df_8_transformed[df_8_transformed["amount"] < 0])
-
-    with tab3:
-        st.subheader("Top Value Insights – PA0008")
-        if not df_8_transformed.empty:
-            col = st.selectbox("Choose column", df_8_transformed.columns)
-            if pd.api.types.is_numeric_dtype(df_8_transformed[col]):
-                fig = px.histogram(df_8_transformed, x=col, title=f"Distribution of {col}")
+        with tab3:
+            st.subheader("📊 Top Value Insights")
+            col = st.selectbox("Choose column", transformed_df.columns)
+            if pd.api.types.is_numeric_dtype(transformed_df[col]):
+                fig = px.histogram(transformed_df, x=col, title=f"Distribution of {col}")
             else:
-                top_vals = df_8_transformed[col].value_counts().nlargest(10)
+                top_vals = transformed_df[col].value_counts().nlargest(10)
                 fig = px.bar(x=top_vals.index, y=top_vals.values, title=f"Top Values in {col}")
             st.plotly_chart(fig, use_container_width=True)
 
-    with tab4:
-        st.subheader("Descriptive Stats – PA0008")
-        st.dataframe(df_8_transformed.describe(include='all'), use_container_width=True)
+        with tab4:
+            st.subheader("📈 Descriptive Statistics")
+            st.dataframe(transformed_df.describe(include='all'), use_container_width=True)
 
-    with tab5:
-        col1, col2 = st.columns(2)
-        with col1:
-            st.download_button("⬇ PA0008 as CSV", df_8_transformed.to_csv(index=False), file_name="PA0008_output.csv")
-            st.download_button("⬇ PA0014 as CSV", df_14_transformed.to_csv(index=False), file_name="PA0014_output.csv")
-        with col2:
-            st.download_button("⬇ PA0008 Excel", df_8_transformed.to_excel(index=False, engine='openpyxl'), file_name="PA0008_output.xlsx")
-            st.download_button("⬇ PA0014 Excel", df_14_transformed.to_excel(index=False, engine='openpyxl'), file_name="PA0014_output.xlsx")
+        with tab5:
+            st.subheader("⬇ Export Cleaned Files")
+            col1, col2 = st.columns(2)
+            with col1:
+                st.download_button(
+                    "📥 Download CSV",
+                    data=transformed_df.to_csv(index=False),
+                    file_name=f"{selected_file}_output.csv",
+                    mime="text/csv"
+                )
+            with col2:
+                st.download_button(
+                    "📥 Download Excel",
+                    data=to_excel(transformed_df),
+                    file_name=f"{selected_file}_output.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
 
-    llm_enabled = False  # Set this manually for now
+        with tab6:
+            st.subheader("🛠️ Admin Panel")
+            show_admin_panel(mode)
+def cleanse_dataframe(df, trim=True, lower=True, empty_nan=True, drop_null=False):
+    df = df.copy()
+    if trim:
+        df = df.applymap(lambda x: str(x).strip() if isinstance(x, str) else x)
+    if lower:
+        df = df.applymap(lambda x: str(x).lower() if isinstance(x, str) else x)
+    if empty_nan:
+        df.replace("", pd.NA, inplace=True)
+    if drop_null:
+        df.dropna(how="all", inplace=True)
+    return df
 
-    with tab6:
-        st.subheader("💬 Ask Your Data (LLM)")
-        query = st.text_input("Ask a question about PA0008:")
-        if query:
-            if not llm_enabled:
-                st.error("Ollama is not available.")
-            else:
-                st.markdown("**Answer:**")
-                st.write(get_nlp_answer(query, df_8_transformed))
+def apply_transformation(value, transformation):
+    try:
+        if transformation == "None":
+            return value
+        elif transformation == "UPPERCASE":
+            return str(value).upper()
+        elif transformation == "lowercase":
+            return str(value).lower()
+        elif transformation == "Title Case":
+            return str(value).title()
+        elif transformation == "Trim Whitespace":
+            return str(value).strip()
+        elif transformation == "Extract First Word":
+            return str(value).split()[0]
+        elif transformation == "Date Format (YYYY-MM-DD)":
+            return pd.to_datetime(value).strftime("%Y-%m-%d")
+        else:
+            return value
+    except:
+        return value
 
+def apply_transformations(df, mappings, picklists):
+    output = []
+    for _, row in df.iterrows():
+        new_row = {}
+        for mapping in mappings:
+            src = mapping.get("source_column")
+            dest = mapping.get("destination_column")
+            transformation = mapping.get("transformation", "None")
+            value = row.get(src, "")
+            new_row[dest] = apply_transformation(value, transformation)
+        output.append(new_row)
+    return pd.DataFrame(output)
 
-    # ✅ NEW Admin Tab
-    with tab7:
-        show_admin_panel(mode="payroll")
+def to_excel(df):
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Sheet1')
+    return output.getvalue()
 
+def init_session():
+    defaults = {
+        "current_step": "upload",
+        "payroll_data": {},
+        "column_mappings": {},
+        "transformed_data": {}
+    }
+    for key, val in defaults.items():
+        if key not in st.session_state:
+            st.session_state[key] = val
