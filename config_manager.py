@@ -2,23 +2,23 @@ import streamlit as st
 import pandas as pd
 import os
 import json
-from pathlib import Path
 from typing import List, Dict, Optional, Union
+from pathlib import Path
 
-# Constants for different tool modes
+# Base directory by mode
 BASE_DIR = {
     "foundation": "foundation_configs",
     "payroll": "payroll_configs"
 }
 
+# Setup constants
 MAX_SAMPLE_ROWS = 1000
 
-# Utility to get all necessary directories for a given mode
+# Paths per mode
 def get_paths(mode: str) -> Optional[Dict[str, str]]:
     if mode not in BASE_DIR:
         st.error(f"❌ Invalid mode: {mode}. Must be one of: {list(BASE_DIR.keys())}")
         return None
-
     base = BASE_DIR[mode]
     return {
         "CONFIG_DIR": os.path.join(base, "configs"),
@@ -26,33 +26,38 @@ def get_paths(mode: str) -> Optional[Dict[str, str]]:
         "SAMPLES_DIR": os.path.join(base, "source_samples")
     }
 
+# Initialize folders
 def initialize_directories(mode: str) -> None:
-    """Ensure mode-specific directories exist."""
     paths = get_paths(mode)
     for path in paths.values():
         Path(path).mkdir(parents=True, exist_ok=True)
-# Transformation logic
-TRANSFORMATION_LIBRARY = {
-    "None": "value",
-    "UPPERCASE": "str(value).upper()",
-    "lowercase": "str(value).lower()",
-    "Title Case": "str(value).title()",
-    "Trim Whitespace": "str(value).strip()",
-    "Concatenate": "str(value1) + str(value2)",
-    "Extract First Word": "str(value).split()[0]",
-    "Date Format (YYYY-MM-DD)": "pd.to_datetime(value).strftime('%Y-%m-%d')",
-    "Lookup Value": "picklist_lookup(value, picklist_name, picklist_column)",
-    "Custom Python": "Enter Python expression using 'value'"
-}
 
-PYTHON_TRANSFORMATION_GUIDE = """
-### Python Transformation Guide
-- Use `value` to reference the source column value
-- For date transformations: `pd.to_datetime(value).strftime('%Y-%m-%d')`
-- For numeric operations: `float(value) * 1.1`
-- For conditional logic: `'Active' if value == 'A' else 'Inactive'`
-"""
+# ✅ Fixed Picklist Management
+def manage_picklists(mode: str):
+    st.subheader("📌 Picklist Management")
 
+    paths = get_paths(mode)
+    picklist_dir = paths["PICKLIST_DIR"]
+    os.makedirs(picklist_dir, exist_ok=True)
+
+    picklist_files = [f for f in os.listdir(picklist_dir) if f.endswith(".csv")]
+
+    selected_file = st.selectbox("Select a picklist to view/edit", picklist_files) if picklist_files else None
+
+    if selected_file:
+        file_path = os.path.join(picklist_dir, selected_file)
+        try:
+            df = pd.read_csv(file_path)
+            edited_df = st.data_editor(df, use_container_width=True, num_rows="dynamic")
+
+            if st.button("💾 Save Picklist", key=f"save_picklist_{mode}_{selected_file}"):
+                edited_df.to_csv(file_path, index=False)
+                st.success(f"✅ Picklist '{selected_file}' saved successfully.")
+        except Exception as e:
+            st.error(f"Error reading '{selected_file}': {e}")
+    else:
+        st.info("No picklists found. Upload or create one manually.")
+# 🔧 Default Destination Templates (for Foundation & Payroll)
 DEFAULT_TEMPLATES = {
     "level": [
         {"target_column1": "effectiveStartDate", "target_column2": "Start Date", "description": "Effective start date of the level"},
@@ -77,7 +82,7 @@ DEFAULT_TEMPLATES = {
         {"target_column1": "Amount", "target_column2": "Amount", "description": ""},
         {"target_column1": "End Date", "target_column2": "End Date", "description": ""},
         {"target_column1": "Notes", "target_column2": "Notes", "description": ""},
-        {"target_column1": "Number of Units", "target_column2": "WkHrs", "description": ""},
+        {"target_column1": "Number of Units", "target_column2": "Number/unit", "description": ""},
         {"target_column1": "Unit of Measure", "target_column2": "Unit of Measure", "description": "Default: AUD"},
         {"target_column1": "Operation", "target_column2": "Operation", "description": ""}
     ],
@@ -97,18 +102,6 @@ DEFAULT_TEMPLATES = {
     ]
 }
 
-if st.button("Reset to Default Templates"):
-    default_template = DEFAULT_TEMPLATES.get(template_type_key, [])
-    st.session_state[f"{template_type_key}_template_{mode}"] = default_template
-
-def safe_get_sample_value(col_data: pd.Series) -> str:
-    if len(col_data) > 0:
-        sample = col_data.iloc[0]
-        if pd.isna(sample):
-            return "NULL"
-        return str(sample) if not isinstance(sample, (str, int, float, bool)) else str(sample)
-    return ""
-
 def convert_text_to_template(text_input: str) -> List[Dict]:
     lines = [line.strip() for line in text_input.split('\n') if line.strip()]
     template = []
@@ -127,249 +120,97 @@ def convert_template_to_text(template: List[Dict]) -> str:
         f"{item['target_column1']},{item['target_column2']},{item.get('description', '')}"
         for item in template
     ])
-def get_dir(base: str, mode: str) -> str:
-    """Returns the mode-specific directory path."""
-    return os.path.join(base, mode)
-
-def get_config_path(config_type: str, mode: str) -> str:
-    """Returns full path to the config file."""
-    return os.path.join(get_dir(CONFIG_DIR, mode), f"{config_type}_config.json")
-
-def get_sample_path(file_type: str, mode: str) -> str:
-    """Returns full path to the source sample file."""
-    return os.path.join(get_dir(SOURCE_SAMPLES_DIR, mode), f"{file_type}_sample.csv")
-
-def get_picklist_path(file_name: str, mode: str) -> str:
-    """Returns full path to picklist file."""
-    return os.path.join(get_dir(PICKLIST_DIR, mode), file_name)
-
-def load_config(config_type: str, mode: str) -> Optional[Union[Dict, List]]:
-    """Load a config file."""
-    try:
-        path = get_config_path(config_type, mode)
-        if not os.path.exists(path):
-            return None
-        with open(path, "r") as f:
-            data = json.load(f)
-            if config_type in ["level", "association"]:
-                if isinstance(data, str):
-                    data = json.loads(data)
-                if not isinstance(data, list):
-                    return None
-            return data
-    except Exception as e:
-        st.error(f"[{mode}] Error loading config: {str(e)}")
-        return None
-
-def save_config(config_type: str, config_data: Union[Dict, List], mode: str) -> None:
-    """Save config safely."""
-    try:
-        os.makedirs(get_dir(CONFIG_DIR, mode), exist_ok=True)
-        final_path = get_config_path(config_type, mode)
-        temp_path = final_path + ".tmp"
-        with open(temp_path, "w") as f:
-            json.dump(config_data, f, indent=2)
-        if os.path.exists(final_path):
-            os.remove(final_path)
-        os.rename(temp_path, final_path)
-    except Exception as e:
-        st.error(f"[{mode}] Error saving config: {str(e)}")
-def validate_sample_columns(source_file: str, sample_df: pd.DataFrame) -> tuple:
-    """Validate required columns exist in uploaded source sample."""
-    required = {
-        "HRP1000": ["Object ID", "Name", "Start date"],
-        "HRP1001": ["Source ID", "Target object ID", "Start date"],
-        "PA0008": ["Employee ID", "Pay Scale Type"],   # 🔁 Update as needed
-        "PA0014": ["Pers.No.", "Wage type", "Start Date", "Amount"]
-    }
-
-    if source_file not in required:
-        return True, []
-
-    missing = set(required[source_file]) - set(sample_df.columns)
-    if missing:
-        return False, list(missing)
-    return True, []
-
-
-    missing = set(required.get(source_file, [])) - set(sample_df.columns)
-    return (False, f"Missing required: {', '.join(missing)}") if missing else (True, "Valid columns")
-
-def process_uploaded_file(uploaded_file, source_file_type: str, mode: str) -> None:
-    """Read, validate, and store uploaded file sample."""
-    try:
-        df = pd.read_excel(uploaded_file) if uploaded_file.name.endswith('.xlsx') else pd.read_csv(uploaded_file)
-        df = df.head(MAX_SAMPLE_ROWS)
-
-        valid, msg = validate_sample_columns(source_file_type, df)
-        if not valid:
-            st.error(msg)
-            return
-
-        path = get_sample_path(source_file_type, mode)
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        df.to_csv(path, index=False)
-        st.success(f"{source_file_type} sample saved to {mode} mode")
-
-        with st.expander("Preview Sample File", expanded=True):
-            st.dataframe(df.astype(str))
-
-        st.subheader("Column Info")
-        col_data = [
-            {
-                "Column": col,
-                "Type": str(df[col].dtype),
-                "Unique Values": df[col].nunique(),
-                "Sample": safe_get_sample_value(df[col])
-            } for col in df.columns
-        ]
-        st.dataframe(pd.DataFrame(col_data))
-
-    except Exception as e:
-        st.error(f"[{mode}] Error processing file: {str(e)}")
-def get_picklist_dir(mode: str) -> str:
-    return os.path.join(PICKLIST_DIR, mode)
-
-def get_sample_path(source_file_type: str, mode: str) -> str:
-    """Return full path to the saved sample file."""
-    paths = get_paths(mode)
-    return os.path.join(paths["SAMPLES_DIR"], f"{source_file_type}_sample.csv")
-
-
-def get_config_path(config_type: str, mode: str) -> str:
-    return os.path.join(CONFIG_DIR, mode, f"{config_type}_config.json")
-
-def save_config(config_type: str, config_data: Union[Dict, List], mode: str) -> None:
-    """Save config data to file."""
-    path = get_config_path(config_type, mode)
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    try:
-        with open(path, "w") as f:
-            json.dump(config_data, f, indent=2)
-        st.success(f"Saved {config_type} config ({mode})")
-    except Exception as e:
-        st.error(f"Error saving {config_type} config: {e}")
-
-def load_config(config_type: str, mode: str) -> Optional[Union[Dict, List]]:
-    """Load config file if exists."""
-    path = get_config_path(config_type, mode)
-    try:
-        if not os.path.exists(path):
-            return None
-        with open(path, "r") as f:
-            return json.load(f)
-    except Exception as e:
-        st.error(f"Error loading {config_type} config for {mode}: {e}")
-        return None
 
 def render_template_editor(template_type: str, mode: str) -> None:
-    """Render the template editor with dynamic config directory based on mode."""
     st.subheader(f"{template_type} Template Configuration")
 
     paths = get_paths(mode)
     config_path = paths["CONFIG_DIR"]
-    default_template = DEFAULT_TEMPLATES[template_type.lower()]
-
     config_file = os.path.join(config_path, f"{template_type.lower()}_config.json")
+
+    # Load or initialize
+    default_template = DEFAULT_TEMPLATES.get(template_type.lower(), [])
     if os.path.exists(config_file):
-        with open(config_file, "r") as f:
-            try:
+        try:
+            with open(config_file, "r") as f:
                 current_template = json.load(f)
-            except json.JSONDecodeError:
-                current_template = default_template
+        except:
+            current_template = default_template
     else:
         current_template = default_template
 
-    if f"{template_type}_template" not in st.session_state:
-        st.session_state[f"{template_type}_template"] = current_template.copy()
+    if f"{template_type}_template_{mode}" not in st.session_state:
+        st.session_state[f"{template_type}_template_{mode}"] = current_template.copy()
 
-    edit_mode = st.radio(
-        "Edit Mode:",
-        ["Table Editor", "Text Input"],
-        horizontal=True,
-        key=f"{template_type}_edit_mode"
-    )
+    edit_mode = st.radio("Edit Mode:", ["Table Editor", "Text Input"], horizontal=True, key=f"{template_type}_edit_mode_{mode}")
 
-    if st.button("Reset to Default Templates"):
-        st.session_state[f"{template_type}_template"] = default_template.copy()
+    if st.button("Reset to Default Templates", key=f"reset_default_{template_type}_{mode}"):
+        st.session_state[f"{template_type}_template_{mode}"] = default_template.copy()
         with open(config_file, "w") as f:
-            json.dump(st.session_state[f"{template_type}_template"], f, indent=2)
-        st.success(f"{template_type} template reset to default!")
+            json.dump(st.session_state[f"{template_type}_template_{mode}"], f, indent=2)
+        st.success(f"✅ {template_type} template reset to default.")
         st.rerun()
 
     if edit_mode == "Table Editor":
-        for i, row in enumerate(st.session_state[f"{template_type}_template"]):
+        for i, row in enumerate(st.session_state[f"{template_type}_template_{mode}"]):
             cols = st.columns([3, 3, 3, 1])
-            row['target_column1'] = cols[0].text_input(
-                "System Column Name", value=row['target_column1'], key=f"{template_type}_col1_{i}", label_visibility="collapsed"
-            )
-            row['target_column2'] = cols[1].text_input(
-                "Display Name", value=row['target_column2'], key=f"{template_type}_col2_{i}", label_visibility="collapsed"
-            )
-            row['description'] = cols[2].text_input(
-                "Description", value=row.get('description', ''), key=f"{template_type}_desc_{i}", label_visibility="collapsed"
-            )
-            if cols[3].button("🗑️", key=f"{template_type}_del_{i}"):
-                del st.session_state[f"{template_type}_template"][i]
+            row['target_column1'] = cols[0].text_input("System Column", row['target_column1'], key=f"{template_type}_col1_{i}_{mode}", label_visibility="collapsed")
+            row['target_column2'] = cols[1].text_input("Display Name", row['target_column2'], key=f"{template_type}_col2_{i}_{mode}", label_visibility="collapsed")
+            row['description'] = cols[2].text_input("Description", row.get('description', ''), key=f"{template_type}_desc_{i}_{mode}", label_visibility="collapsed")
+            if cols[3].button("🗑️", key=f"{template_type}_del_{i}_{mode}"):
+                del st.session_state[f"{template_type}_template_{mode}"][i]
                 st.rerun()
 
-        if st.button("Save Template"):
+        if st.button("Save Template", key=f"save_template_{template_type}_{mode}"):
             with open(config_file, "w") as f:
-                json.dump(st.session_state[f"{template_type}_template"], f, indent=2)
-            st.success("Template saved successfully!")
+                json.dump(st.session_state[f"{template_type}_template_{mode}"], f, indent=2)
+            st.success("Template saved successfully.")
 
-    else:  # Text Input
+    else:
         text_input = st.text_area(
             "Template (CSV format: col1,col2,desc)",
-            value=convert_template_to_text(st.session_state[f"{template_type}_template"]),
+            value=convert_template_to_text(st.session_state[f"{template_type}_template_{mode}"]),
             height=250
         )
-        if st.button("Apply Text Changes"):
+        if st.button("Apply Text Changes", key=f"apply_txt_{template_type}_{mode}"):
             try:
                 parsed = convert_text_to_template(text_input)
-                st.session_state[f"{template_type}_template"] = parsed
-                st.success("Template updated!")
+                st.session_state[f"{template_type}_template_{mode}"] = parsed
+                st.success("Template updated.")
                 st.rerun()
             except Exception as e:
-                st.error(f"Failed to parse input: {e}")
+                st.error(f"Error: {e}")
+# 🔁 Transformation options
+TRANSFORMATION_LIBRARY = {
+    "None": "value",
+    "UPPERCASE": "str(value).upper()",
+    "lowercase": "str(value).lower()",
+    "Title Case": "str(value).title()",
+    "Trim Whitespace": "str(value).strip()",
+    "Concatenate": "str(value1) + str(value2)",
+    "Extract First Word": "str(value).split()[0]",
+    "Date Format (YYYY-MM-DD)": "pd.to_datetime(value).strftime('%Y-%m-%d')",
+    "Lookup Value": "picklist_lookup(value, picklist_name, picklist_column)",
+    "Custom Python": "Enter Python expression using 'value'"
+}
 
-def manage_picklists(mode: str):
-    st.subheader("📌 Picklist Management")
-
-    paths = get_paths(mode)
-    picklist_dir = paths["PICKLIST_DIR"]
-    os.makedirs(picklist_dir, exist_ok=True)
-
-    picklist_files = [f for f in os.listdir(picklist_dir) if f.endswith(".csv")]
-
-    selected_file = st.selectbox("Select a picklist to view/edit", picklist_files) if picklist_files else None
-
-    if selected_file:
-        df = pd.read_csv(os.path.join(picklist_dir, selected_file))
-        edited_df = st.data_editor(df, use_container_width=True, num_rows="dynamic")
-        
-        if st.button("💾 Save Picklist"):
-            edited_df.to_csv(os.path.join(picklist_dir, selected_file), index=False)
-            st.success("Picklist saved!")
-    else:
-        st.info("No picklists available. Upload or create one manually.")
 def render_column_mapping_interface(mode: str):
     st.subheader(f"Column Mapping – {'Payroll' if mode == 'payroll' else 'Foundation'} Mode")
-
-    st.info("This section allows you to define how source columns map to destination columns using transformations.")
+    st.info("Define how your source columns map to destination columns using transformations.")
 
     paths = get_paths(mode)
     if not paths:
-        st.error("Failed to resolve paths.")
+        st.error("❌ Failed to resolve paths.")
         return
 
-    # Dynamically select file types based on mode
     file_options = ["PA0008", "PA0014"] if mode == "payroll" else ["HRP1000", "HRP1001"]
     source_file = st.selectbox("Select source file type", file_options, key=f"column_map_src_{mode}")
     sample_path = os.path.join(paths["SAMPLES_DIR"], f"{source_file}_sample.csv")
+    config_path = os.path.join(paths["CONFIG_DIR"], f"{source_file}_column_mapping.json")
 
+    # Load sample file
     if not os.path.exists(sample_path):
-        st.warning(f"No sample file uploaded for {source_file}. Please upload one in the first tab.")
+        st.warning(f"⚠️ No sample uploaded for {source_file}. Please upload one first.")
         return
 
     try:
@@ -379,28 +220,30 @@ def render_column_mapping_interface(mode: str):
         st.error(f"Error reading sample: {e}")
         return
 
-    config_path = os.path.join(paths["CONFIG_DIR"], f"{source_file}_column_mapping.json")
-    existing_mappings = []
-
-    if os.path.exists(config_path):
-        try:
-            with open(config_path, "r") as f:
-                existing_mappings = json.load(f)
-        except Exception as e:
-            st.error(f"Error loading existing mappings: {e}")
-
+    # Load existing mappings
     if f"mappings_{source_file}_{mode}" not in st.session_state:
-        st.session_state[f"mappings_{source_file}_{mode}"] = existing_mappings
+        if os.path.exists(config_path):
+            try:
+                with open(config_path, "r") as f:
+                    st.session_state[f"mappings_{source_file}_{mode}"] = json.load(f)
+            except:
+                st.session_state[f"mappings_{source_file}_{mode}"] = []
+        else:
+            st.session_state[f"mappings_{source_file}_{mode}"] = []
 
     st.markdown("### 🔁 Define Mappings")
-    for i, mapping in enumerate(st.session_state[f"mappings_{source_file}_{mode}"]):
+    mappings = st.session_state[f"mappings_{source_file}_{mode}"]
+
+    for i, mapping in enumerate(mappings):
         cols = st.columns([3, 3, 3, 1])
         mapping["source_column"] = cols[0].selectbox(
-            "Source", columns, index=columns.index(mapping["source_column"]) if mapping["source_column"] in columns else 0,
+            "Source", columns,
+            index=columns.index(mapping["source_column"]) if mapping["source_column"] in columns else 0,
             key=f"{mode}_src_{i}", label_visibility="collapsed"
         )
         mapping["destination_column"] = cols[1].text_input(
-            "Destination", value=mapping["destination_column"], key=f"{mode}_dest_{i}", label_visibility="collapsed"
+            "Destination", value=mapping["destination_column"],
+            key=f"{mode}_dest_{i}", label_visibility="collapsed"
         )
         mapping["transformation"] = cols[2].selectbox(
             "Transformation", list(TRANSFORMATION_LIBRARY.keys()),
@@ -408,28 +251,70 @@ def render_column_mapping_interface(mode: str):
             key=f"{mode}_trans_{i}", label_visibility="collapsed"
         )
         if cols[3].button("🗑️", key=f"{mode}_del_map_{i}"):
-            del st.session_state[f"mappings_{source_file}_{mode}"][i]
+            del mappings[i]
             st.rerun()
 
-    if st.button("➕ Add New Mapping"):
-        st.session_state[f"mappings_{source_file}_{mode}"].append({
-            "source_column": columns[0],
+    if st.button("➕ Add New Mapping", key=f"add_map_btn_{mode}"):
+        mappings.append({
+            "source_column": columns[0] if columns else "",
             "destination_column": "",
             "transformation": "None"
         })
 
-    if st.button("💾 Save Mappings"):
+    if st.button("💾 Save Mappings", key=f"save_map_btn_{mode}"):
         try:
+            os.makedirs(paths["CONFIG_DIR"], exist_ok=True)
             with open(config_path, "w") as f:
-                json.dump(st.session_state[f"mappings_{source_file}_{mode}"], f, indent=2)
-            st.success("Mappings saved!")
+                json.dump(mappings, f, indent=2)
+            st.success("✅ Mappings saved successfully!")
         except Exception as e:
-            st.error(f"Error saving: {e}")
+            st.error(f"❌ Error saving: {e}")
+def manage_picklists(mode: str):
+    st.subheader("📚 Picklist Management")
+    paths = get_paths(mode)
+    if not paths:
+        st.error("❌ Could not resolve picklist path.")
+        return
 
+    os.makedirs(paths["PICKLIST_DIR"], exist_ok=True)
+    picklist_files = [f for f in os.listdir(paths["PICKLIST_DIR"]) if f.endswith(".csv") or f.endswith(".xlsx")]
+
+    uploaded = st.file_uploader("Upload new picklist (.csv or .xlsx)", type=["csv", "xlsx"], key=f"picklist_upload_{mode}")
+    if uploaded:
+        save_path = os.path.join(paths["PICKLIST_DIR"], uploaded.name)
+        with open(save_path, "wb") as f:
+            f.write(uploaded.getbuffer())
+        st.success(f"Uploaded to {save_path}")
+        st.rerun()
+
+    if not picklist_files:
+        st.info("No picklists available. Upload one to get started.")
+        return
+
+    selected = st.selectbox("📄 Select a picklist to view/edit", picklist_files, key=f"select_picklist_{mode}")
+    full_path = os.path.join(paths["PICKLIST_DIR"], selected)
+
+    try:
+        df = pd.read_excel(full_path) if selected.endswith(".xlsx") else pd.read_csv(full_path)
+    except Exception as e:
+        st.error(f"❌ Failed to load: {e}")
+        return
+
+    st.write(f"🔍 Preview: `{selected}`")
+    st.dataframe(df, use_container_width=True)
+
+    if st.button("💾 Save Changes", key=f"save_picklist_{mode}"):
+        try:
+            if selected.endswith(".xlsx"):
+                df.to_excel(full_path, index=False)
+            else:
+                df.to_csv(full_path, index=False)
+            st.success("✅ Picklist saved.")
+        except Exception as e:
+            st.error(f"❌ Save error: {e}")
 def show_admin_panel(mode: str = "foundation") -> None:
     """Render the admin interface based on selected mode."""
-    st.title(f"Configuration Manager – {mode.capitalize()} Mode")
-
+    st.title(f"🛠️ Configuration Manager – {mode.capitalize()} Mode")
     initialize_directories(mode)
 
     tab1, tab2, tab3, tab4 = st.tabs([
@@ -440,40 +325,31 @@ def show_admin_panel(mode: str = "foundation") -> None:
     ])
 
     with tab1:
-        st.subheader("Upload Source File Samples")
-        st.info("Upload sample files first to configure column mappings")
-
+        st.subheader("📁 Upload Sample Files")
         source_options = ["PA0008", "PA0014"] if mode == "payroll" else ["HRP1000", "HRP1001"]
-        source_file_type = st.radio("Select source file type:", source_options, horizontal=True, key=f"source_file_type_radio_{mode}")
-
-
-
-        uploaded_file = st.file_uploader(
-            f"Upload {source_file_type} sample file (CSV or Excel)",
-            type=["csv", "xlsx"],
-            key=f"{source_file_type}_{mode}_upload"
-        )
-
+        source_type = st.radio("Choose file type:", source_options, horizontal=True, key=f"src_type_{mode}")
+        
+        uploaded_file = st.file_uploader("Upload CSV or Excel", type=["csv", "xlsx"], key=f"{source_type}_{mode}_upload")
         if uploaded_file:
-            process_uploaded_file(uploaded_file, source_file_type, mode)
+            process_uploaded_file(uploaded_file, source_type, mode)
 
-        sample_path = get_sample_path(source_file_type, mode)
+        sample_path = get_sample_path(source_type, mode)
         if os.path.exists(sample_path):
-            st.subheader("Current Sample Info")
             try:
                 df = pd.read_csv(sample_path, nrows=1)
-                st.info(f"Current sample has {len(df.columns)} columns")
-                is_valid, msg = validate_sample_columns(source_file_type, df)
-                st.success(msg) if is_valid else st.error(msg)
-
-
+                st.success(f"✅ {source_type} Sample Loaded")
+                is_valid, msg = validate_sample_columns(source_type, df)
+                st.success("✔ Columns valid") if is_valid else st.error(f"Missing columns: {msg}")
             except Exception as e:
-                st.error(f"Error reading sample: {e}")
-        else:
-            st.info(f"No sample uploaded for {source_file_type} yet")
+                st.error(f"⚠️ Failed to read sample: {e}")
 
     with tab2:
-        template_type = st.radio("Select template type:", ["Level", "Association"], horizontal=True, key=f"template_type_radio_{mode}")
+        if mode == "payroll":
+            template_options = ["PA0008", "PA0014"]
+        else:
+            template_options = ["Level", "Association"]
+
+        template_type = st.radio("Select Template Type", template_options, horizontal=True, key=f"template_type_{mode}")
         render_template_editor(template_type, mode)
 
     with tab3:
@@ -481,12 +357,3 @@ def show_admin_panel(mode: str = "foundation") -> None:
 
     with tab4:
         render_column_mapping_interface(mode)
-if __name__ == "__main__":
-    import streamlit.web.bootstrap
-
-    def run():
-        import streamlit as st
-        mode = st.sidebar.selectbox("Select Configuration Mode", ["foundation", "payroll"], key="mode_select")
-        show_admin_panel(mode)
-
-    streamlit.web.bootstrap.run(run, "", [])
