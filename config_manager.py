@@ -5,6 +5,11 @@ import json
 from typing import List, Dict, Optional, Union
 from pathlib import Path
 
+
+def get_sample_path(source_file_type: str, mode: str) -> str:
+    """Returns the path for the sample file based on file type and mode."""
+    return os.path.join(f"{mode}_configs", "samples", f"{source_file_type}.csv")
+
 # Base directory by mode
 BASE_DIR = {
     "foundation": "foundation_configs",
