@@ -356,3 +356,13 @@ def regenerate_default_mapping(file_key: str, mode: str) -> None:
     if not os.path.exists(path):
         with open(path, "w") as f:
             json.dump([], f, indent=2)
+# ✅ Transformation options used in Column Mapping
+TRANSFORMATION_LIBRARY = {
+    "None": lambda x: x,
+    "Uppercase": lambda x: str(x).upper() if pd.notna(x) else x,
+    "Lowercase": lambda x: str(x).lower() if pd.notna(x) else x,
+    "Trim Spaces": lambda x: str(x).strip() if pd.notna(x) else x,
+    "To Integer": lambda x: int(x) if pd.notna(x) and str(x).isdigit() else x,
+    "To Float": lambda x: float(x) if pd.notna(x) else x,
+    "Date Only": lambda x: str(x).split(" ")[0] if pd.notna(x) and isinstance(x, str) else x,
+}
