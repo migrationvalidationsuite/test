@@ -22,6 +22,8 @@ def get_paths(mode: str) -> Optional[Dict[str, str]]:
         "PICKLIST_DIR": os.path.join(base, "picklists"),
         "SAMPLES_DIR": os.path.join(base, "source_samples")
     }
+def get_sample_path(file_type: str, sample_dir: str) -> str:
+    return os.path.join(sample_dir, f"{file_type}_sample.csv")
 
 # ✅ Setup directories if they don’t exist
 def initialize_directories(mode: str):
