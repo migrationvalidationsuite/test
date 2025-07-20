@@ -185,7 +185,11 @@ def render_foundation_v2():
         else:
             st.warning("Basic Dashboard Mode")
 
-        admin_toggle = st.checkbox("Admin Mode", help="Enable configuration panel"), key=f"foundation_admin_toggle_sidebar_{st.session_state.get('tool_subpage', '')}"
+        admin_toggle = st.checkbox(
+            "Admin Mode",
+            help="Enable configuration panel",
+            key=f"foundation_admin_toggle_sidebar_{st.session_state.get('tool_subpage', '')}"
+        )
 
 
         if admin_toggle:
@@ -308,3 +312,4 @@ def render_foundation_v2():
                 "<div style='text-align: center; color: #6b7280;'>LOAD DATA</div>",
                 unsafe_allow_html=True
             )
+__all__ = ["render_foundation_v2"]
