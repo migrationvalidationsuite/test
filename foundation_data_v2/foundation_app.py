@@ -9,6 +9,7 @@ from .panels.enhanced_validation_panel import show_validation_panel as show_vali
 
 
 
+
 # Configure page with improved layout settings
 st.set_page_config(
     page_title="Org Hierarchy Visual Explorer v2.4",
