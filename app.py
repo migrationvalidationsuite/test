@@ -6,9 +6,7 @@ from payroll import app as payroll_app
 from employee_app import render_employee_tool
 from employeedata.app.data_migration_tool import render_employee_v2
 
-
 # Hide Streamlit style (footer and hamburger menu)
-# 🔒 Hide Streamlit footer, menu, and header for a cleaner look
 st.markdown("""
     <style>
     #MainMenu {visibility: hidden;}
