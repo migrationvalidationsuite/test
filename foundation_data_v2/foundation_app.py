@@ -33,12 +33,12 @@ except ImportError:
 
 # Admin panel fallback
 try:
-    from .config_manager import show_admin_panel
+    from foundation_data_v2.config_manager import show_admin_panel
 except ImportError:
     try:
-        from .panels.config_manager import show_admin_panel
+        from .config_manager import show_admin_panel
     except ImportError:
-        def show_admin_panel():
+        def show_admin_panel(state=None):
             st.error("Admin panel not found. Please ensure config_manager.py exists.")
             st.info("Create config_manager.py or place it in the panels/ folder")
 
