@@ -617,6 +617,11 @@ def render_foundation_v2():
             'generated_output_files': {},
             'output_generation_metadata': {}
         }
+# --- Sidebar Navigation ---
+with st.sidebar:
+    st.title("Navigation")
+
+    panel = st.radio("Go to", ["Hierarchy", "Validation", "Transformation", "Statistics", "Dashboard", "Admin"] if st.session_state.state.get('admin_mode') else ["Hierarchy", "Validation", "Transformation", "Statistics", "Dashboard"])
 
     # Optional: page config if needed
     st.set_page_config(layout="wide")
