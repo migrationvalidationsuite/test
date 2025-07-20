@@ -2,7 +2,7 @@ import os, sys
 import streamlit as st
 import base64
 from streamlit_option_menu import option_menu
-from foundation_module.foundation_app import render as render_foundation
+from foundation_data_v2.foundation_app import *
 from payroll import app as payroll_app
 from employee_app import render_employee_tool
 from employeedata.app.data_migration_tool import render_employee_v2
@@ -357,15 +357,15 @@ elif selected == "Launch Demo":
         # ✅ This actually loads your payroll Streamlit tool
         payroll_app.render_payroll_tool()
 
-    elif st.session_state.demo_page == "foundation_data_view":
+     elif st.session_state.demo_page == "foundation_data_view":
         back_col, _ = st.columns([1, 5])
         with back_col:
             if st.button("⬅ Back to Demo", key="back_from_foundation", use_container_width=True):
                 st.session_state.demo_page = "sap_to_sf"
                 st.rerun()
     
-        st.markdown("### Foundation Data – Interactive View")
-        render_foundation()
+        # ✅ This loads the new Foundation Data V2 interface
+        import foundation_data_v2.foundation_app  # Ensures rerun triggers proper execution
 
 
     elif st.session_state.demo_page == "employee_data_v2":
