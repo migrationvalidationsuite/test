@@ -120,26 +120,47 @@ if "selected" not in st.session_state:
 if "demo_page" not in st.session_state:
     st.session_state.demo_page = "main"
 
-# ✅ Sidebar navigation
-with st.sidebar:
-    selected = option_menu(
-        menu_title="Navigation",
-        options=["Home", "Solutions", "Launch Demo"],
-        icons=["house", "layers", "rocket"],
-        default_index=0,
-        styles={
-            "container": {"padding": "5px", "background-color": "#f8f9fa"},
-            "icon": {"color": "#003366", "font-size": "18px"},
-            "nav-link": {
-                "font-size": "16px",
-                "text-align": "left",
-                "margin": "5px",
-                "--hover-color": "#e6f0ff",
-            },
-            "nav-link-selected": {"background-color": "#cfe2ff", "font-weight": "bold"},
-        },
+# ✅ Sidebar navigation with conditional logic
+if st.session_state.get("demo_page") == "foundation_data_view":
+    # Sidebar for Foundation Data tool
+    st.sidebar.title("Navigation")
+    st.sidebar.markdown("### Select Panel")
+    panel = st.sidebar.radio(
+        "Mode",
+        ["Hierarchy", "Validation", "Transformation", "Statistics", "Dashboard", "Admin"],
+        key="foundation_panel_radio"
     )
-    st.session_state.selected = selected
+    st.session_state.panel = panel
+
+    st.sidebar.markdown("### Data Status")
+    hrp1000_loaded = "✅" if st.session_state.get("hrp1000") is not None else "❌"
+    hrp1001_loaded = "✅" if st.session_state.get("hrp1001") is not None else "❌"
+    st.sidebar.markdown(f"HRP1000 Loaded: {hrp1000_loaded}")
+    st.sidebar.markdown(f"HRP1001 Loaded: {hrp1001_loaded}")
+
+else:
+    # Default sidebar nav: Home / Solutions / Launch Demo
+    with st.sidebar:
+        selected = option_menu(
+            menu_title="Navigation",
+            options=["Home", "Solutions", "Launch Demo"],
+            icons=["house", "layers", "rocket"],
+            default_index=0,
+            styles={
+                "container": {"padding": "5px", "background-color": "#f8f9fa"},
+                "icon": {"color": "#003366", "font-size": "18px"},
+                "nav-link": {
+                    "font-size": "16px",
+                    "text-align": "left",
+                    "margin": "5px",
+                    "--hover-color": "#e6f0ff",
+                },
+                "nav-link-selected": {
+                    "background-color": "#cfe2ff", "font-weight": "bold"
+                },
+            },
+        )
+        st.session_state.selected = selected
 
 # ✅ Remove top white space
 st.markdown("""
