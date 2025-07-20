@@ -139,6 +139,12 @@ if 'state' not in st.session_state:
         'generated_output_files': {},
         'output_generation_metadata': {}
     }
+back_col, _ = st.columns([1, 6])
+with back_col:
+    if st.button("⬅ Back to Demo", key="back_from_foundation", use_container_width=True):
+        st.session_state.demo_page = "sap_to_sf"
+        st.session_state.tool_subpage = "Tool"
+        st.rerun()
 
 # ✅ Foundation embedded rendering (used from app.py)
 def render_foundation_v2():
@@ -179,7 +185,7 @@ def render_foundation_v2():
         else:
             st.warning("Basic Dashboard Mode")
 
-        admin_toggle = st.checkbox("Admin Mode", help="Enable configuration tools", key="foundation_admin_toggle")
+        admin_toggle = st.checkbox("Admin Mode", help="Enable configuration tools", key="foundation_admin_toggle_sidebar")
 
         if admin_toggle:
             try:
