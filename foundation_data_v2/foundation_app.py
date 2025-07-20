@@ -612,3 +612,6 @@ with st.sidebar:
     enhancement_count = sum([STATISTICS_ENHANCED, VALIDATION_ENHANCED, DASHBOARD_ENHANCED])
     if enhancement_count > 0:
         st.caption(f"🚀 {enhancement_count}/3 panels enhanced!")
+def render_foundation_v2():
+    import streamlit as st
+    from foundation_data_v2.foundation_app import *  # or restructure logic into this function
