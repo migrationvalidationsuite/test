@@ -120,16 +120,18 @@ if "selected" not in st.session_state:
     st.session_state.selected = "Home"
 if "demo_page" not in st.session_state:
     st.session_state.demo_page = "main"
-
-# ✅ Always render sidebar navigation menu first
+# ✅ Sidebar navigation with conditional logic
+if st.session_state.get("demo_page") == "foundation_data_view":
+    render_foundation_v2()
+else:
+    # Default sidebar nav: Home / Solutions / Launch Demo
     with st.sidebar:
-        st.markdown("## 📁 Navigation")
         selected = option_menu(
             menu_title="Navigation",
             options=["Home", "Solutions", "Launch Demo"],
             icons=["house", "layers", "rocket"],
-            default_index=2 if st.session_state.get("demo_page") == "sap_to_sf" else 0,
-            key="main_sidebar",  # 🔑 Unique key to avoid duplication
+            default_index=0,
+            key="main_sidebar",
             styles={
                 "container": {"padding": "5px", "background-color": "#f8f9fa"},
                 "icon": {"color": "#003366", "font-size": "18px"},
@@ -145,17 +147,15 @@ if "demo_page" not in st.session_state:
             },
         )
         st.session_state.selected = selected
-    
-    # ✅ Now handle which page to show
-    if st.session_state.get("demo_page") == "foundation_data_view":
-        render_foundation_v2()
-    elif st.session_state.get("demo_page") == "payroll_data_tool":
-        render_payroll_tool()
-    elif st.session_state.get("demo_page") == "employee_data_tool":
-        render_employee_tool()
-    else:
-        # Show homepage or SAP-to-SF tool selector
-        show_homepage_or_selector()
+# ✅ Page Routing
+if st.session_state.get("selected") == "Home":
+    show_homepage_or_selector()
+
+elif st.session_state.get("selected") == "Solutions":
+    show_solutions()
+
+elif st.session_state.get("selected") == "Launch Demo":
+    show_launch_demo()
 
 # ✅ Remove top white space
 st.markdown("""
