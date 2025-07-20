@@ -27,8 +27,6 @@ if "page" not in st.session_state:
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
-# ✅ Page setup
-st.set_page_config(layout="wide", page_title="MVS", page_icon="📊")
 # 👇 Force sidebar collapse control to always show
 st.markdown("""
 <style>
