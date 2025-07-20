@@ -190,8 +190,9 @@ def render_foundation_v2():
         admin_toggle = st.checkbox(
             "Admin Mode",
             help="Enable configuration panel",
-            key="foundation_admin_toggle"
+            key=f"foundation_admin_toggle_{st.session_state.get('demo_page', 'unknown')}"
         )
+
 
 
         if admin_toggle:
