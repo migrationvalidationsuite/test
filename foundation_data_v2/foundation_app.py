@@ -179,7 +179,7 @@ def render_foundation_v2():
         else:
             st.warning("Basic Dashboard Mode")
 
-        admin_toggle = st.checkbox("Admin Mode", help="Enable configuration tools")
+        admin_toggle = st.checkbox("Admin Mode", help="Enable configuration tools", key="foundation_admin_toggle")
 
         if admin_toggle:
             try:
@@ -249,85 +249,55 @@ def render_foundation_v2():
         st.error(f"Unexpected error in {panel} panel: {e}")
         with st.expander("Debug Info"):
             st.code(f"{type(e).__name__}: {str(e)}")
-col1, col2, col3 = st.columns(3)
-with col1:
-    if st.session_state.state['admin_mode']:
-        st.markdown(
-            "<div style='text-align: center; color: #ff4b4b; font-weight: bold;'>ADMIN MODE ACTIVE</div>",
-            unsafe_allow_html=True
-        )
-    else:
-        st.markdown(
-            "<div style='text-align: center; color: #6b7280;'>User Mode</div>",
-            unsafe_allow_html=True
-        )
 
-with col2:
-    enhancements = []
-    if STATISTICS_ENHANCED:
-        enhancements.append("Stats")
-    if VALIDATION_ENHANCED:
-        enhancements.append("Validation")
-    if DASHBOARD_ENHANCED:
-        enhancements.append("Dashboard")
+    # ✅ Status Footer Grid
+    col1, col2, col3 = st.columns(3)
 
-    if enhancements:
-        st.markdown(
-            f"<div style='text-align: center; color: #22c55e; font-weight: bold;'>ENHANCED: {', '.join(enhancements)}</div>",
-            unsafe_allow_html=True
-        )
-    else:
-        st.markdown(
-            "<div style='text-align: center; color: #f59e0b;'>Basic Mode</div>",
-            unsafe_allow_html=True
-        )
+    with col1:
+        if st.session_state.state['admin_mode']:
+            st.markdown(
+                "<div style='text-align: center; color: #ff4b4b; font-weight: bold;'>ADMIN MODE ACTIVE</div>",
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(
+                "<div style='text-align: center; color: #6b7280;'>User Mode</div>",
+                unsafe_allow_html=True
+            )
 
-with col3:
-    if st.session_state.state.get('generated_output_files'):
-        st.markdown(
-            "<div style='text-align: center; color: #3b82f6; font-weight: bold;'>PIPELINE READY</div>",
-            unsafe_allow_html=True
-        )
-    elif st.session_state.state.get('hierarchy_structure'):
-        st.markdown(
-            "<div style='text-align: center; color: #f59e0b;'>GENERATE FILES</div>",
-            unsafe_allow_html=True
-        )
-    else:
-        st.markdown(
-            "<div style='text-align: center; color: #6b7280;'>LOAD DATA</div>",
-            unsafe_allow_html=True
-        )
+    with col2:
+        enhancements = []
+        if STATISTICS_ENHANCED:
+            enhancements.append("Stats")
+        if VALIDATION_ENHANCED:
+            enhancements.append("Validation")
+        if DASHBOARD_ENHANCED:
+            enhancements.append("Dashboard")
 
-# ✅ Sidebar Footer Metrics
-with st.sidebar:
-    st.divider()
-    st.caption("**System Status**")
+        if enhancements:
+            st.markdown(
+                f"<div style='text-align: center; color: #22c55e; font-weight: bold;'>ENHANCED: {', '.join(enhancements)}</div>",
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(
+                "<div style='text-align: center; color: #f59e0b;'>Basic Mode</div>",
+                unsafe_allow_html=True
+            )
 
-    if st.session_state.state.get('source_hrp1000') is not None and st.session_state.state.get('source_hrp1001') is not None:
-        total_records = len(st.session_state.state['source_hrp1000']) + len(st.session_state.state['source_hrp1001'])
-        st.caption(f"📊 Source: {total_records:,} records")
-
-    if st.session_state.state.get('output_generation_metadata'):
-        metadata = st.session_state.state['output_generation_metadata']
-        total_files = metadata.get('total_level_files', 0) + metadata.get('total_association_files', 0)
-        st.caption(f"📁 Output: {total_files} files generated")
-
-        gen_time = metadata.get("generated_at", "")
-        if gen_time:
-            from datetime import datetime
-            try:
-                dt = datetime.fromisoformat(gen_time)
-                diff = datetime.now() - dt
-                if diff.total_seconds() < 60:
-                    st.caption("⏱️ Generated: Just now")
-                elif diff.total_seconds() < 3600:
-                    st.caption(f"⏱️ Generated: {int(diff.total_seconds() // 60)}m ago")
-                else:
-                    st.caption(f"⏱️ Generated: {int(diff.total_seconds() // 3600)}h ago")
-            except:
-                st.caption("⏱️ Generated: Recently")
-
-    enhanced_count = sum([STATISTICS_ENHANCED, VALIDATION_ENHANCED, DASHBOARD_ENHANCED])
-    if enhanced_count:
-        st.caption(f"🚀 {enhanced_count}/3 panels enhanced")
+    with col3:
+        if st.session_state.state.get('generated_output_files'):
+            st.markdown(
+                "<div style='text-align: center; color: #3b82f6; font-weight: bold;'>PIPELINE READY</div>",
+                unsafe_allow_html=True
+            )
+        elif st.session_state.state.get('hierarchy_structure'):
+            st.markdown(
+                "<div style='text-align: center; color: #f59e0b;'>GENERATE FILES</div>",
+                unsafe_allow_html=True
+            )
+        else:
+            st.markdown(
+                "<div style='text-align: center; color: #6b7280;'>LOAD DATA</div>",
+                unsafe_allow_html=True
+            )
