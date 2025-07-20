@@ -601,11 +601,27 @@ with st.sidebar:
     if enhancement_count > 0:
         st.caption(f"🚀 {enhancement_count}/3 panels enhanced!")
 def render_foundation_v2():
-    # Rerun the full file by calling main content here.
-    pass
+    # ✅ Ensure session state is initialized
+    if 'state' not in st.session_state:
+        st.session_state.state = {
+            'hrp1000': None,
+            'hrp1001': None,
+            'hierarchy': None,
+            'level_names': {i: f"Level {i}" for i in range(1, 21)},
+            'transformations': [],
+            'validation_results': None,
+            'statistics': None,
+            'transformation_log': TransformationLogger(),
+            'pending_transforms': [],
+            'admin_mode': False,
+            'generated_output_files': {},
+            'output_generation_metadata': {}
+        }
+
+    # Optional: page config if needed
     st.set_page_config(layout="wide")
-def render_foundation_v2():
-    # Directly call routing logic for embedded mode
+
+    # ✅ Route to correct panel
     if panel == "Hierarchy":
         show_hierarchy_panel(st.session_state.state)
     elif panel == "Validation":
