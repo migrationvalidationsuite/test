@@ -1,19 +1,26 @@
 import streamlit as st
 import base64
 from streamlit_option_menu import option_menu
-from foundation_data_v2.foundation_app import *
+
+# ✅ Component Imports
+from foundation_data_v2.foundation_app import render_foundation_v2
 from payroll import app as payroll_app
 from employee_app import render_employee_tool
 from employeedata.app.data_migration_tool import render_employee_v2
 
-# Hide Streamlit style (footer and hamburger menu)
+# ✅ Hide Streamlit default menu and footer
 st.markdown("""
     <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
+    #MainMenu, footer, header {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
+
+# ✅ Page config (set only once, at the top level)
+st.set_page_config(
+    layout="wide",
+    page_title="Org Hierarchy Visual Explorer v2.4",
+    page_icon="📊"
+)
 
 if "page" not in st.session_state:
     st.session_state.page = "Home"
@@ -119,22 +126,7 @@ if "demo_page" not in st.session_state:
 
 # ✅ Sidebar navigation with conditional logic
 if st.session_state.get("demo_page") == "foundation_data_view":
-    # Sidebar for Foundation Data tool
-    st.sidebar.title("Navigation")
-    st.sidebar.markdown("### Select Panel")
-    panel = st.sidebar.radio(
-        "Mode",
-        ["Hierarchy", "Validation", "Transformation", "Statistics", "Dashboard", "Admin"],
-        key="foundation_panel_radio"
-    )
-    st.session_state.panel = panel
-
-    st.sidebar.markdown("### Data Status")
-    hrp1000_loaded = "✅" if st.session_state.get("hrp1000") is not None else "❌"
-    hrp1001_loaded = "✅" if st.session_state.get("hrp1001") is not None else "❌"
-    st.sidebar.markdown(f"HRP1000 Loaded: {hrp1000_loaded}")
-    st.sidebar.markdown(f"HRP1001 Loaded: {hrp1001_loaded}")
-
+    render_foundation_v2()
 else:
     # Default sidebar nav: Home / Solutions / Launch Demo
     with st.sidebar:
@@ -159,6 +151,7 @@ else:
             },
         )
         st.session_state.selected = selected
+
 
 # ✅ Remove top white space
 st.markdown("""
