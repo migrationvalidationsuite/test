@@ -4,11 +4,13 @@ import streamlit as st
 import pandas as pd
 import os
 
-st.set_page_config(
-    layout="wide",
-    page_title="Org Hierarchy Visual Explorer v2.4",
-    page_icon="📊"
-)
+def render_foundation_v2():
+    st.set_page_config(
+        layout="wide",
+        page_title="Org Hierarchy Visual Explorer v2.4",
+        page_icon="📊"
+    )
+
 
 # Panel imports with fallbacks
 from .panels.hierarchy_panel_fixed import show_hierarchy_panel
