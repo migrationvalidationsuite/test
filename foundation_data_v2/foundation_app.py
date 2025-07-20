@@ -191,7 +191,6 @@ def render_foundation_v2():
             key=f"foundation_admin_toggle_sidebar_{st.session_state.get('tool_subpage', '')}"
         )
 
-
         if admin_toggle:
             try:
                 admin_pw = st.secrets.get("admin_password", "")
