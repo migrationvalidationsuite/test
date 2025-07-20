@@ -3,7 +3,7 @@ import pandas as pd
 import os
 import json
 from pathlib import Path
-from utils.hierarchy_utils import get_default_mappings
+from .utils.hierarchy_utils import get_default_mappings
 from typing import List, Dict, Optional, Union
 import io
 
