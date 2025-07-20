@@ -249,6 +249,7 @@ def render_foundation_v2():
         st.error(f"Unexpected error in {panel} panel: {e}")
         with st.expander("Debug Info"):
             st.code(f"{type(e).__name__}: {str(e)}")
+col1, col2, col3 = st.columns(3)
 with col1:
     if st.session_state.state['admin_mode']:
         st.markdown(
