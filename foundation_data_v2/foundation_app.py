@@ -140,125 +140,115 @@ if 'state' not in st.session_state:
         'output_generation_metadata': {}
     }
 
-# ✅ Sidebar layout
-with st.sidebar:
-    st.title("Navigation")
+# ✅ Foundation embedded rendering (used from app.py)
+def render_foundation_v2():
+    if 'state' not in st.session_state:
+        st.session_state.state = {
+            'hrp1000': None,
+            'hrp1001': None,
+            'hierarchy': None,
+            'level_names': {i: f"Level {i}" for i in range(1, 21)},
+            'transformations': [],
+            'validation_results': None,
+            'statistics': None,
+            'transformation_log': TransformationLogger(),
+            'pending_transforms': [],
+            'admin_mode': False,
+            'generated_output_files': {},
+            'output_generation_metadata': {}
+        }
 
-    # Show enhancement banners
-    if STATISTICS_ENHANCED:
-        st.markdown('<div class="statistics-status">Enhanced Statistics Active 🚀</div>', unsafe_allow_html=True)
-    else:
-        st.warning("Basic Statistics Mode")
+    st.title("Org Hierarchy Visual Explorer v2.4")
 
-    if VALIDATION_ENHANCED:
-        st.markdown('<div class="validation-status">Enhanced Validation Active 🔍</div>', unsafe_allow_html=True)
-    else:
-        st.warning("Basic Validation Mode")
-
-    if DASHBOARD_ENHANCED:
-        st.markdown('<div class="dashboard-status">Enhanced Dashboard Active 📊</div>', unsafe_allow_html=True)
-    else:
-        st.warning("Basic Dashboard Mode")
-
-    # Admin Mode Toggle
-    admin_toggle = st.checkbox("Admin Mode", help="Enable configuration tools")
-
-    if admin_toggle:
-        try:
-            admin_pw = st.secrets.get("admin_password", "")
-            if admin_pw:
-                entered_pw = st.text_input("Admin Password", type="password")
-                if entered_pw == admin_pw:
-                    st.session_state.state["admin_mode"] = True
-                    st.success("Admin mode activated")
-                elif entered_pw:
-                    st.error("Incorrect password")
-                    st.session_state.state["admin_mode"] = False
-            else:
-                st.session_state.state["admin_mode"] = True
-                st.info("Admin mode (no password configured)")
-        except Exception:
-            st.session_state.state["admin_mode"] = True
-            st.info("Admin mode (local development)")
-    else:
-        st.session_state.state["admin_mode"] = False
-
-    # Panel selector
-    panel_options = ["Hierarchy", "Validation", "Transformation", "Statistics", "Dashboard"]
-    if st.session_state.state.get("admin_mode"):
-        panel_options.insert(0, "Admin")
-
-    panel = st.radio("Select Panel", panel_options, key="foundation_panel_radio")
-# ✅ Page Title
-st.title("Org Hierarchy Visual Explorer v2.4")
-
-# ✅ Panel Routing
-try:
-    if panel == "Admin":
-        st.markdown("<div class='admin-section'>", unsafe_allow_html=True)
-        st.header("Admin Configuration Center")
-        show_admin_panel()
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    elif panel == "Hierarchy":
-        show_hierarchy_panel(st.session_state.state)
-
-    elif panel == "Validation":
-        if VALIDATION_ENHANCED:
-            st.markdown("<div class='enhanced-panel'>", unsafe_allow_html=True)
-
-        try:
-            show_validation_panel(st.session_state.state)
-        except Exception as e:
-            st.error(f"Error in Validation panel: {str(e)}")
-            with st.expander("Debug Information"):
-                st.code(f"{type(e).__name__}: {str(e)}")
-
-        if VALIDATION_ENHANCED:
-            st.markdown("</div>", unsafe_allow_html=True)
-
-    elif panel == "Transformation":
-        st.markdown("<div class='missing-panel'>", unsafe_allow_html=True)
-        show_transformation_panel(st.session_state.state)
-        st.markdown("</div>", unsafe_allow_html=True)
-
-    elif panel == "Statistics":
-        if STATISTICS_ENHANCED:
-            st.markdown("<div class='enhanced-panel'>", unsafe_allow_html=True)
-
-        try:
-            show_statistics_panel(st.session_state.state)
-        except Exception as e:
-            st.error(f"Error in Statistics panel: {str(e)}")
-            with st.expander("Debug Information"):
-                st.code(f"{type(e).__name__}: {str(e)}")
+    # ✅ Sidebar layout
+    with st.sidebar:
+        st.title("Navigation")
 
         if STATISTICS_ENHANCED:
-            st.markdown("</div>", unsafe_allow_html=True)
-
-    elif panel == "Dashboard":
-        if DASHBOARD_ENHANCED:
-            st.markdown("<div class='enhanced-panel'>", unsafe_allow_html=True)
+            st.markdown('<div class="statistics-status">Enhanced Statistics Active 🚀</div>', unsafe_allow_html=True)
         else:
+            st.warning("Basic Statistics Mode")
+
+        if VALIDATION_ENHANCED:
+            st.markdown('<div class="validation-status">Enhanced Validation Active 🔍</div>', unsafe_allow_html=True)
+        else:
+            st.warning("Basic Validation Mode")
+
+        if DASHBOARD_ENHANCED:
+            st.markdown('<div class="dashboard-status">Enhanced Dashboard Active 📊</div>', unsafe_allow_html=True)
+        else:
+            st.warning("Basic Dashboard Mode")
+
+        admin_toggle = st.checkbox("Admin Mode", help="Enable configuration tools")
+
+        if admin_toggle:
+            try:
+                admin_pw = st.secrets.get("admin_password", "")
+                if admin_pw:
+                    entered_pw = st.text_input("Admin Password", type="password")
+                    if entered_pw == admin_pw:
+                        st.session_state.state["admin_mode"] = True
+                        st.success("Admin mode activated")
+                    elif entered_pw:
+                        st.error("Incorrect password")
+                        st.session_state.state["admin_mode"] = False
+                else:
+                    st.session_state.state["admin_mode"] = True
+                    st.info("Admin mode (no password configured)")
+            except Exception:
+                st.session_state.state["admin_mode"] = True
+                st.info("Admin mode (local dev)")
+        else:
+            st.session_state.state["admin_mode"] = False
+
+        panel_options = ["Hierarchy", "Validation", "Transformation", "Statistics", "Dashboard"]
+        if st.session_state.state.get("admin_mode"):
+            panel_options.insert(0, "Admin")
+
+        panel = st.radio("Select Panel", panel_options, key="foundation_panel_radio_inline")
+
+    # ✅ Panel routing
+    try:
+        if panel == "Admin":
+            st.markdown("<div class='admin-section'>", unsafe_allow_html=True)
+            st.header("Admin Configuration Center")
+            show_admin_panel()
+            st.markdown("</div>", unsafe_allow_html=True)
+
+        elif panel == "Hierarchy":
+            show_hierarchy_panel(st.session_state.state)
+
+        elif panel == "Validation":
+            if VALIDATION_ENHANCED:
+                st.markdown("<div class='enhanced-panel'>", unsafe_allow_html=True)
+            show_validation_panel(st.session_state.state)
+            if VALIDATION_ENHANCED:
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        elif panel == "Transformation":
             st.markdown("<div class='missing-panel'>", unsafe_allow_html=True)
+            show_transformation_panel(st.session_state.state)
+            st.markdown("</div>", unsafe_allow_html=True)
 
-        try:
+        elif panel == "Statistics":
+            if STATISTICS_ENHANCED:
+                st.markdown("<div class='enhanced-panel'>", unsafe_allow_html=True)
+            show_statistics_panel(st.session_state.state)
+            if STATISTICS_ENHANCED:
+                st.markdown("</div>", unsafe_allow_html=True)
+
+        elif panel == "Dashboard":
+            if DASHBOARD_ENHANCED:
+                st.markdown("<div class='enhanced-panel'>", unsafe_allow_html=True)
+            else:
+                st.markdown("<div class='missing-panel'>", unsafe_allow_html=True)
             show_dashboard_panel(st.session_state.state)
-        except Exception as e:
-            st.error(f"Error in Dashboard panel: {str(e)}")
-            with st.expander("Debug Information"):
-                st.code(f"{type(e).__name__}: {str(e)}")
+            st.markdown("</div>", unsafe_allow_html=True)
 
-        st.markdown("</div>", unsafe_allow_html=True)
-
-except Exception as e:
-    st.error(f"Unexpected error in {panel} panel: {e}")
-    with st.expander("Debug Information"):
-        st.code(f"{type(e).__name__}: {str(e)}")
-# ✅ Footer Status Indicators
-st.divider()
-col1, col2, col3 = st.columns(3)
-
+    except Exception as e:
+        st.error(f"Unexpected error in {panel} panel: {e}")
+        with st.expander("Debug Info"):
+            st.code(f"{type(e).__name__}: {str(e)}")
 with col1:
     if st.session_state.state['admin_mode']:
         st.markdown(
@@ -340,39 +330,3 @@ with st.sidebar:
     enhanced_count = sum([STATISTICS_ENHANCED, VALIDATION_ENHANCED, DASHBOARD_ENHANCED])
     if enhanced_count:
         st.caption(f"🚀 {enhanced_count}/3 panels enhanced")
-def render_foundation_v2():
-    # Entry point for embedded rendering
-    if 'state' not in st.session_state:
-        st.session_state.state = {
-            'hrp1000': None,
-            'hrp1001': None,
-            'hierarchy': None,
-            'level_names': {i: f"Level {i}" for i in range(1, 21)},
-            'transformations': [],
-            'validation_results': None,
-            'statistics': None,
-            'transformation_log': TransformationLogger(),
-            'pending_transforms': [],
-            'admin_mode': False,
-            'generated_output_files': {},
-            'output_generation_metadata': {}
-        }
-
-    # This reuses the full routing logic based on selected panel
-    panel_options = ["Hierarchy", "Validation", "Transformation", "Statistics", "Dashboard"]
-    if st.session_state.state.get("admin_mode"):
-        panel_options.insert(0, "Admin")
-    panel = st.radio("Select Panel", panel_options, key="foundation_panel_radio_inline")
-
-    if panel == "Admin":
-        show_admin_panel()
-    elif panel == "Hierarchy":
-        show_hierarchy_panel(st.session_state.state)
-    elif panel == "Validation":
-        show_validation_panel(st.session_state.state)
-    elif panel == "Transformation":
-        show_transformation_panel(st.session_state.state)
-    elif panel == "Statistics":
-        show_statistics_panel(st.session_state.state)
-    elif panel == "Dashboard":
-        show_dashboard_panel(st.session_state.state)
