@@ -2,6 +2,12 @@ import streamlit as st
 import pandas as pd
 import os
 
+st.set_page_config(
+    layout="wide",
+    page_title="Org Hierarchy Visual Explorer v2.4",
+    page_icon="📊"
+)
+
 from .panels.hierarchy_panel_fixed import show_hierarchy_panel
 
 # Import enhanced validation panel with fallback
@@ -629,8 +635,6 @@ panel = st.radio(
     key="foundation_panel_selector"
 )
 
-    # Optional: page config if needed
-    st.set_page_config(layout="wide")
 
     # ✅ Route to correct panel
     if panel == "Hierarchy":
