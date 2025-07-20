@@ -8,24 +8,23 @@ from payroll import app as payroll_app
 from employee_app import render_employee_tool
 from employeedata.app.data_migration_tool import render_employee_v2
 
-# ✅ Hide Streamlit default menu and footer
+# ✅ Hide Streamlit default UI
 st.markdown("""
     <style>
     #MainMenu, footer, header {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
-# ✅ Page config (set only once, at the top level)
+# ✅ Page config (do this only ONCE, and only here)
 st.set_page_config(
     layout="wide",
     page_title="Org Hierarchy Visual Explorer v2.4",
     page_icon="📊"
 )
 
-if "page" not in st.session_state:
-    st.session_state.page = "Home"
-
+# ✅ Ensure proper sys path
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
+
 
 # 👇 Force sidebar collapse control to always show
 st.markdown("""
