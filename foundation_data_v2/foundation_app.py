@@ -9,6 +9,7 @@ from foundation_data_v2.panels.dashboard_panel import show_dashboard_panel
 from foundation_data_v2.config_manager import show_admin_panel
 from foundation_data_v2.utils.hierarchy_utils import get_default_mappings
 
+
 # Configure page with improved layout settings
 st.set_page_config(
     page_title="Org Hierarchy Visual Explorer v2.4",
