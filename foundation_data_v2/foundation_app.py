@@ -604,3 +604,17 @@ def render_foundation_v2():
     # Rerun the full file by calling main content here.
     pass
     st.set_page_config(layout="wide")
+def render_foundation_v2():
+    # Directly call routing logic for embedded mode
+    if panel == "Hierarchy":
+        show_hierarchy_panel(st.session_state.state)
+    elif panel == "Validation":
+        show_validation_panel(st.session_state.state)
+    elif panel == "Transformation":
+        show_transformation_panel(st.session_state.state)
+    elif panel == "Statistics":
+        show_statistics_panel(st.session_state.state)
+    elif panel == "Dashboard":
+        show_dashboard_panel(st.session_state.state)
+    elif panel == "Admin" and st.session_state.state['admin_mode']:
+        show_admin_panel()
