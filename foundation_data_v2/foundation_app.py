@@ -2,12 +2,13 @@ import streamlit as st
 import pandas as pd
 import os
 
-# ✅ All panel imports from correct subfolder
-from foundation_data_v2.panels.hierarchy_panel_fixed import show_hierarchy_panel
+# foundation_data_v2/foundation_app.py
+
+from foundation_data_v2.panels.hierarchy_panel_fixed     import show_hierarchy_panel
 from foundation_data_v2.panels.enhanced_validation_panel import show_validation_panel
-from foundation_data_v2.panels.statistics_panel import show_statistics_panel
-from foundation_data_v2.panels.dashboard_panel import show_dashboard_panel
-from config_manager import show_admin_panel
+from foundation_data_v2.panels.statistics_panel          import show_statistics_panel
+from foundation_data_v2.panels.dashboard_panel           import show_dashboard_panel
+from foundation_data_v2.config_manager                   import show_admin_panel
 
 
 # Configure page with improved layout settings
