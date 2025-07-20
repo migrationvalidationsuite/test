@@ -6,6 +6,8 @@ from foundation_module.foundation_app import render as render_foundation
 from payroll.app import render_payroll_tool
 from employeedata.app.data_migration_tool import render_employee_v2
 from config_manager import show_admin_panel
+from foundation_data_v2.foundation_app import run as run_foundation_v2  # Make sure this function exists
+
 
 # Hide Streamlit style (footer and hamburger menu)
 # 🔒 Hide Streamlit footer, menu, and header for a cleaner look
