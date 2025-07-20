@@ -3,12 +3,9 @@ import streamlit as st
 import base64
 from streamlit_option_menu import option_menu
 from foundation_module.foundation_app import render as render_foundation
-from payroll.app import render_payroll_tool
+from payroll import app as payroll_app
+from employee_app import render_employee_tool
 from employeedata.app.data_migration_tool import render_employee_v2
-from config_manager import show_admin_panel
-from foundation_data_v2.foundation_app import run as run_foundation_v2  # Make sure this function exists
-
-
 # Hide Streamlit style (footer and hamburger menu)
 # 🔒 Hide Streamlit footer, menu, and header for a cleaner look
 st.markdown("""
@@ -21,8 +18,6 @@ st.markdown("""
 
 if "page" not in st.session_state:
     st.session_state.page = "Home"
-if "tool_subpage" not in st.session_state:
-    st.session_state.tool_subpage = "Tool"
 
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
@@ -351,62 +346,38 @@ elif selected == "Launch Demo":
             next_page="employee_data_v2"
         )
 
+
     elif st.session_state.demo_page == "payroll_data_tool":
         back_col, _ = st.columns([1, 5])
         with back_col:
             if st.button("⬅ Back to Demo", key="back_from_payroll", use_container_width=True):
                 st.session_state.demo_page = "sap_to_sf"
-                st.session_state.tool_subpage = "Tool"  # 🔄 Reset to default
                 st.rerun()
-    
-        st.sidebar.markdown("---")
-        st.sidebar.header("Payroll Section")
-        section = st.sidebar.radio("Select Mode", ["Configuration Manager", "Tool"], key="payroll_radio")
-        st.session_state.tool_subpage = section
-    
-        if section == "Configuration Manager":
-            try:
-                show_admin_panel(mode="payroll")
-            except Exception as e:
-                st.error(f"Configuration Manager failed to load: {e}")
-        else:
-            try:
-                render_payroll_tool()
-            except Exception as e:
-                st.error(f"Payroll Tool failed to load: {e}")
-    
+
+        # ✅ This actually loads your payroll Streamlit tool
+        payroll_app.render_payroll_tool()
+
     elif st.session_state.demo_page == "foundation_data_view":
         back_col, _ = st.columns([1, 5])
         with back_col:
             if st.button("⬅ Back to Demo", key="back_from_foundation", use_container_width=True):
                 st.session_state.demo_page = "sap_to_sf"
-                st.session_state.tool_subpage = "Tool"  # 🔄 Reset to default
                 st.rerun()
     
-        st.sidebar.markdown("---")
-        selected_radio = st.radio("Foundation Section:", ["Configuration Manager", "Tool"], key="foundation_radio")
-        st.session_state.tool_subpage = selected_radio
-    
-        if st.session_state.tool_subpage == "Tool":
-            st.markdown("### Foundation Data – Interactive View")
-            render_foundation()
-        else:
-            try:
-                show_admin_panel(mode="foundation")
-            except Exception as e:
-                st.error(f"Configuration Manager failed to load: {e}")
-    
-    
+        st.markdown("### Foundation Data – Interactive View")
+        render_foundation()
+
+
     elif st.session_state.demo_page == "employee_data_v2":
         back_col, _ = st.columns([1, 5])
         with back_col:
             if st.button("⬅ Back to Demo", key="back_from_empv2", use_container_width=True):
                 st.session_state.demo_page = "sap_to_sf"
                 st.rerun()
-    
+
         st.markdown("### Employee Data V2 – Interactive Migration Tool")
         render_employee_v2()
-    
+
 
 # -------------------- SOLUTIONS --------------------
 elif selected == "Solutions":
