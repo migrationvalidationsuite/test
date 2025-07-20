@@ -1,21 +1,11 @@
-# foundation_data_v2/foundation_app.py
-
 import streamlit as st
 import pandas as pd
 import os
 
-def render_foundation_v2():
-    st.set_page_config(
-        layout="wide",
-        page_title="Org Hierarchy Visual Explorer v2.4",
-        page_icon="📊"
-    )
-
-
-# Panel imports with fallbacks
+# ✅ Panel imports with fallbacks
 from .panels.hierarchy_panel_fixed import show_hierarchy_panel
 
-# Validation panel fallback
+# ✅ Validation panel fallback
 try:
     from .panels.enhanced_validation_panel import show_validation_panel
     VALIDATION_ENHANCED = True
@@ -31,7 +21,7 @@ except ImportError:
             st.info("This panel is under development")
         VALIDATION_ENHANCED = False
 
-# Admin panel fallback
+# ✅ Admin panel fallback
 try:
     from foundation_data_v2.config_manager import show_admin_panel
 except ImportError:
