@@ -281,7 +281,7 @@ if st.session_state.get("selected") == "Home":
     """, unsafe_allow_html=True)
 
 # -------------------- LAUNCH DEMO --------------------
-elif selected == "Launch Demo":
+elif st.session_state.get("selected") == "Launch Demo":
     if st.session_state.demo_page == "main":
         st.markdown("""
             <div style='background-color:#e6f0ff;padding:20px;border-radius:10px;margin-bottom:20px;'>
