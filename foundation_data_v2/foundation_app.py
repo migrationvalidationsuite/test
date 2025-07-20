@@ -3,34 +3,15 @@ import pandas as pd
 import os
 
 from .panels.hierarchy_panel_fixed import show_hierarchy_panel
-from .panels.enhanced_validation_panel import show_validation_panel
-from .panels.statistics_panel import show_statistics_panel
-from .panels.dashboard_panel import show_dashboard_panel
-
-# Configure page with improved layout settings
-st.set_page_config(
-    page_title="Org Hierarchy Visual Explorer v2.4",
-    page_icon="📊",
-    layout="centered",
-    initial_sidebar_state="expanded",
-    menu_items={
-        'Get Help': 'https://example.com/help',
-        'Report a bug': "https://example.com/bug",
-        'About': "### Org Hierarchy Visual Explorer v2.4\n\nIncludes new Admin Configuration features and Enhanced Statistics"
-    }
-)
-
-import pandas as pd
-from panels.hierarchy_panel_fixed import show_hierarchy_panel
 
 # Import enhanced validation panel with fallback
 try:
-    from panels.enhanced_validation_panel import show_validation_panel
+    from .panels.enhanced_validation_panel import show_validation_panel
     VALIDATION_ENHANCED = True
 except ImportError:
     # Fallback to original validation panel
     try:
-        from panels.validation_panel_fixed import show_validation_panel
+        from .panels.validation_panel_fixed import show_validation_panel
         VALIDATION_ENHANCED = False
         st.warning("Using basic validation panel. Enhanced version not found.")
     except ImportError:
@@ -42,11 +23,11 @@ except ImportError:
 
 # Import admin panel with fallbacks
 try:
-    from config_manager import show_admin_panel
+    from .config_manager import show_admin_panel
 except ImportError:
     # Fallback if config_manager is in panels folder
     try:
-        from panels.config_manager import show_admin_panel
+        from .panels.config_manager import show_admin_panel
     except ImportError:
         def show_admin_panel():
             st.error("Admin panel not found. Please ensure config_manager.py exists.")
@@ -54,12 +35,12 @@ except ImportError:
 
 # Import enhanced statistics panel with fallbacks
 try:
-    from panels.statistics_panel_enhanced import show_statistics_panel
+    from .panels.statistics_panel_enhanced import show_statistics_panel
     STATISTICS_ENHANCED = True
 except ImportError:
     # Fallback to original statistics panel
     try:
-        from panels.statistics_panel import show_statistics_panel
+        from .panels.statistics_panel import show_statistics_panel
         STATISTICS_ENHANCED = False
         st.warning("Explore enhanced statistics to know your data!")
     except ImportError:
@@ -71,7 +52,7 @@ except ImportError:
 
 # Import other panels with fallbacks for missing panels
 try:
-    from panels.transformation_panel import show_transformation_panel, TransformationLogger
+    from .panels.transformation_panel import show_transformation_panel, TransformationLogger
 except ImportError:
     def show_transformation_panel(state):
         st.title("Transformation Panel")
@@ -83,12 +64,12 @@ except ImportError:
             self.logs = []
 
 try:
-    from panels.dashboard_panel_fixed import show_dashboard_panel
+    from .panels.dashboard_panel_fixed import show_dashboard_panel
     DASHBOARD_ENHANCED = True
 except ImportError:
     # Try regular dashboard panel
     try:
-        from panels.dashboard_panel import show_dashboard_panel
+        from .panels.dashboard_panel import show_dashboard_panel
         DASHBOARD_ENHANCED = False
     except ImportError:
         def show_dashboard_panel(state):
