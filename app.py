@@ -367,8 +367,9 @@ elif st.session_state.get("selected") == "Launch Demo":
     elif st.session_state.demo_page == "payroll_data_tool":
         back_col, _ = st.columns([1, 5])
         with back_col:
-            if st.button("⬅ Back to Demo", key="back_from_payroll", use_container_width=True):
+            if st.button("⬅ Back to Demo", key="back_from_foundation", use_container_width=True):
                 st.session_state.demo_page = "sap_to_sf"
+                st.session_state.tool_subpage = "Tool"  # reset if needed
                 st.rerun()
 
         # ✅ This actually loads your payroll Streamlit tool
