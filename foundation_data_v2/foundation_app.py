@@ -185,8 +185,7 @@ def render_foundation_v2():
         else:
             st.warning("Basic Dashboard Mode")
 
-        admin_toggle = st.checkbox("Admin Mode", help="Enable configuration tools", key=f"foundation_admin_toggle_sidebar_{st.session_state.get('tool_subpage', '')}"
-
+        admin_toggle = st.checkbox("Admin Mode", help="Enable configuration tools", key="foundation_admin_toggle_sidebar"
 
         if admin_toggle:
             try:
