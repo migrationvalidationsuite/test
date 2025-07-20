@@ -25,7 +25,6 @@ st.set_page_config(
 # ✅ Ensure proper sys path
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
-
 # 👇 Force sidebar collapse control to always show
 st.markdown("""
 <style>
@@ -41,7 +40,6 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
-
 
 # ✅ CSS styling (light/dark mode fix + banner)
 st.markdown("""
@@ -85,18 +83,6 @@ section.main > div, .block-container {
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("""
-<style>
-/* Force sidebar toggle button to always be visible */
-[data-testid="collapsedControl"] {
-    display: block !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    pointer-events: all !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
 # ✅ Background image setup
 def set_background(image_file):
     with open(image_file, "rb") as f:
@@ -121,40 +107,51 @@ if "selected" not in st.session_state:
 if "demo_page" not in st.session_state:
     st.session_state.demo_page = "main"
 
-# ✅ Sidebar navigation (always present)
-with st.sidebar:
-    selected = option_menu(
-        menu_title="Navigation",
-        options=["Home", "Solutions", "Launch Demo"],
-        icons=["house", "layers", "rocket"],
-        default_index=["Home", "Solutions", "Launch Demo"].index(st.session_state.selected),
-        key="main_sidebar",
-        styles={
-            "container": {"padding": "5px", "background-color": "#f8f9fa"},
-            "icon": {"color": "#003366", "font-size": "18px"},
-            "nav-link": {
-                "font-size": "16px",
-                "text-align": "left",
-                "margin": "5px",
-                "--hover-color": "#e6f0ff",
-            },
-            "nav-link-selected": {
-                "background-color": "#cfe2ff", "font-weight": "bold"
-            },
-        },
-    )
-    st.session_state.selected = selected
-
-# ✅ Page Routing
+# ✅ Sidebar navigation with conditional logic
 if st.session_state.get("demo_page") == "foundation_data_view":
     render_foundation_v2()
+else:
+    with st.sidebar:
+        selected = option_menu(
+            menu_title="Navigation",
+            options=["Home", "Solutions", "Launch Demo"],
+            icons=["house", "layers", "rocket"],
+            default_index=0,
+            key="main_sidebar",
+            styles={
+                "container": {"padding": "5px", "background-color": "#f8f9fa"},
+                "icon": {"color": "#003366", "font-size": "18px"},
+                "nav-link": {
+                    "font-size": "16px",
+                    "text-align": "left",
+                    "margin": "5px",
+                    "--hover-color": "#e6f0ff",
+                },
+                "nav-link-selected": {
+                    "background-color": "#cfe2ff", "font-weight": "bold"
+                },
+            },
+        )
+        st.session_state.selected = selected
 
-elif st.session_state.selected == "Home":
+# ✅ Dummy Pages
+def show_homepage():
+    st.title("Welcome to Org Hierarchy Visual Explorer")
+    st.write("This is your homepage placeholder.")
+
+def show_solutions():
+    st.title("Solutions Overview")
+    st.write("This is your solutions page.")
+
+def show_launch_demo():
+    st.title("Launch Migration Demo")
+    st.write("This is your demo launcher.")
+
+# ✅ Routing
+if st.session_state.selected == "Home":
     show_homepage()
-
 elif st.session_state.selected == "Solutions":
     show_solutions()
-
 elif st.session_state.selected == "Launch Demo":
     show_launch_demo()
 
@@ -172,6 +169,7 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
 
 
 # -------------------- HOME --------------------
