@@ -370,6 +370,28 @@ elif selected == "Launch Demo":
 
     # ✅ Foundation Data V2
     elif st.session_state.demo_page == "foundation_data_view":
+        # ✅ Keep the main nav sidebar consistent
+        with st.sidebar:
+            selected = option_menu(
+                menu_title="Navigation",
+                options=["Home", "Solutions", "Launch Demo"],
+                icons=["house", "layers", "rocket"],
+                default_index=2,  # Adjust if needed
+                key="main_sidebar",
+                styles={
+                    "container": {"padding": "0!important", "background-color": "#fafafa"},
+                    "icon": {"color": "black", "font-size": "16px"},
+                    "nav-link": {
+                        "font-size": "16px",
+                        "text-align": "left",
+                        "margin": "0",
+                        "--hover-color": "#eee",
+                    },
+                    "nav-link-selected": {"background-color": "#dbeafe"},
+                }
+            )
+    
+        # ✅ Back button
         back_col, _ = st.columns([1, 5])
         with back_col:
             if st.button("⬅ Back to Demo", key="back_from_foundation", use_container_width=True):
@@ -377,9 +399,11 @@ elif selected == "Launch Demo":
                 st.session_state.tool_subpage = "Tool"
                 st.rerun()
     
-        import foundation_data_v2.foundation_app  # ⬅ ensures rerun works
-        foundation_data_v2.foundation_app.render_foundation_v2()
-
+        # ✅ Render Foundation Tool
+        try:
+            render_foundation_v2()
+        except Exception as e:
+            st.error(f"❌ Failed to load Foundation Tool: {e}")
 
 
     elif st.session_state.demo_page == "employee_data_v2":
