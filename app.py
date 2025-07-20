@@ -376,36 +376,28 @@ elif st.session_state.demo_page == "payroll_data_tool":
     # ✅ This actually loads your payroll Streamlit tool
     payroll_app.render_payroll_tool()
 
-# ✅ Global sidebar nav (always visible)
-with st.sidebar:
-    st.markdown("## Navigation")
-    selected = option_menu(
-        menu_title="Navigation",
-        options=["Home", "Solutions", "Launch Demo"],
-        icons=["house", "layers", "rocket"],
-        default_index=2,
-        key="main_sidebar",
-        styles={
-            "container": {"padding": "0!important", "background-color": "#fafafa"},
-            "icon": {"color": "black", "font-size": "16px"},
-            "nav-link": {
-                "font-size": "16px",
-                "text-align": "left",
-                "margin": "0",
-                "--hover-color": "#eee",
-            },
-            "nav-link-selected": {"background-color": "#dbeafe"},
-        }
-    )
-
-    # Optional nav-based routing
-    if selected == "Home":
-        st.session_state.demo_page = "Home"
-    elif selected == "Solutions":
-        st.session_state.demo_page = "Solutions"
-    elif selected == "Launch Demo":
-        st.session_state.demo_page = "sap_to_sf"
-
+# ✅ Foundation Data V2 Page
+elif st.session_state.demo_page == "foundation_data_view":
+    # ✅ Keep the main nav sidebar consistent
+    with st.sidebar:
+        selected = option_menu(
+            menu_title="Navigation",
+            options=["Home", "Solutions", "Launch Demo"],
+            icons=["house", "layers", "rocket"],
+            default_index=2,
+            key="main_sidebar",
+            styles={
+                "container": {"padding": "0!important", "background-color": "#fafafa"},
+                "icon": {"color": "black", "font-size": "16px"},
+                "nav-link": {
+                    "font-size": "16px",
+                    "text-align": "left",
+                    "margin": "0",
+                    "--hover-color": "#eee",
+                },
+                "nav-link-selected": {"background-color": "#dbeafe"},
+            }
+        )
 
     # ✅ Back button
     back_col, _ = st.columns([1, 5])
