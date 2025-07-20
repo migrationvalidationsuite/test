@@ -340,3 +340,39 @@ with st.sidebar:
     enhanced_count = sum([STATISTICS_ENHANCED, VALIDATION_ENHANCED, DASHBOARD_ENHANCED])
     if enhanced_count:
         st.caption(f"🚀 {enhanced_count}/3 panels enhanced")
+def render_foundation_v2():
+    # Entry point for embedded rendering
+    if 'state' not in st.session_state:
+        st.session_state.state = {
+            'hrp1000': None,
+            'hrp1001': None,
+            'hierarchy': None,
+            'level_names': {i: f"Level {i}" for i in range(1, 21)},
+            'transformations': [],
+            'validation_results': None,
+            'statistics': None,
+            'transformation_log': TransformationLogger(),
+            'pending_transforms': [],
+            'admin_mode': False,
+            'generated_output_files': {},
+            'output_generation_metadata': {}
+        }
+
+    # This reuses the full routing logic based on selected panel
+    panel_options = ["Hierarchy", "Validation", "Transformation", "Statistics", "Dashboard"]
+    if st.session_state.state.get("admin_mode"):
+        panel_options.insert(0, "Admin")
+    panel = st.radio("Select Panel", panel_options, key="foundation_panel_radio_inline")
+
+    if panel == "Admin":
+        show_admin_panel()
+    elif panel == "Hierarchy":
+        show_hierarchy_panel(st.session_state.state)
+    elif panel == "Validation":
+        show_validation_panel(st.session_state.state)
+    elif panel == "Transformation":
+        show_transformation_panel(st.session_state.state)
+    elif panel == "Statistics":
+        show_statistics_panel(st.session_state.state)
+    elif panel == "Dashboard":
+        show_dashboard_panel(st.session_state.state)
