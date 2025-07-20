@@ -146,6 +146,7 @@ else:
             options=["Home", "Solutions", "Launch Demo"],
             icons=["house", "layers", "rocket"],
             default_index=0,
+            key="main_sidebar",  # 🔑 FIX: added unique key
             styles={
                 "container": {"padding": "5px", "background-color": "#f8f9fa"},
                 "icon": {"color": "#003366", "font-size": "18px"},
