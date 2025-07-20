@@ -134,18 +134,6 @@ else:
         )
         st.session_state.selected = selected
 
-# ✅ Dummy Pages
-def show_homepage():
-    st.title("Welcome to Org Hierarchy Visual Explorer")
-    st.write("This is your homepage placeholder.")
-
-def show_solutions():
-    st.title("Solutions Overview")
-    st.write("This is your solutions page.")
-
-def show_launch_demo():
-    st.title("Launch Migration Demo")
-    st.write("This is your demo launcher.")
 
 # ✅ Routing
 if st.session_state.selected == "Home":
