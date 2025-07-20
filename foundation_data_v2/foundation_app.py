@@ -216,7 +216,7 @@ def render_foundation_v2():
         if panel == "Admin":
             st.markdown("<div class='admin-section'>", unsafe_allow_html=True)
             st.header("Admin Configuration Center")
-            show_admin_panel()
+            show_admin_panel(st.session_state.state) 
             st.markdown("</div>", unsafe_allow_html=True)
 
         elif panel == "Hierarchy":
