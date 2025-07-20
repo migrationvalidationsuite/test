@@ -7,7 +7,7 @@ from foundation_data_v2.panels.enhanced_validation_panel import show_validation_
 from foundation_data_v2.panels.statistics_panel import show_statistics_panel
 from foundation_data_v2.panels.dashboard_panel import show_dashboard_panel
 from foundation_data_v2.config_manager import show_admin_panel
-from foundation_data_v2.utils.hierarchy_utils import get_default_mappings
+
 
 
 # Configure page with improved layout settings
