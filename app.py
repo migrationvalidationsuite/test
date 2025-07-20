@@ -167,7 +167,7 @@ st.markdown("""
 
 
 # -------------------- HOME --------------------
-if selected == "Home":
+if st.session_state.get("selected") == "Home":
     st.markdown("""
         <style>
         .full-width-banner {
