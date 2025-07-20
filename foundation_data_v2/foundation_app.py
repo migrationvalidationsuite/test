@@ -603,4 +603,4 @@ with st.sidebar:
 def render_foundation_v2():
     # Rerun the full file by calling main content here.
     pass
-
+    st.set_page_config(layout="wide")
