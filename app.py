@@ -7,6 +7,8 @@ from foundation_data_v2.foundation_app import render_foundation_v2
 from payroll import app as payroll_app
 from employee_app import render_employee_tool
 from employeedata.app.data_migration_tool import render_employee_v2
+from foundation_data_v2.config_manager import show_admin_panel
+
 
 # ✅ Hide Streamlit default UI
 st.markdown("""
