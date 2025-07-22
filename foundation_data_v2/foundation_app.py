@@ -157,33 +157,38 @@ def render_foundation_v2():
         }
 
     st.title("Org Hierarchy Visual Explorer v2.4")
-
-    # ✅ Sidebar layout
+    
+    # ✅ Single sidebar block
     with st.sidebar:
+        # 🔙 Back button goes first
+        if st.button("⬅ Back to Demo"):
+            st.session_state.demo_page = "main"
+            st.session_state.selected = "Launch Demo"
+            st.rerun()
+    
+        st.markdown("---")
         st.title("Navigation")
-
+    
         if STATISTICS_ENHANCED:
             st.markdown('<div class="statistics-status">Enhanced Statistics Active 🚀</div>', unsafe_allow_html=True)
         else:
             st.warning("Basic Statistics Mode")
-
+    
         if VALIDATION_ENHANCED:
             st.markdown('<div class="validation-status">Enhanced Validation Active 🔍</div>', unsafe_allow_html=True)
         else:
             st.warning("Basic Validation Mode")
-
+    
         if DASHBOARD_ENHANCED:
             st.markdown('<div class="dashboard-status">Enhanced Dashboard Active 📊</div>', unsafe_allow_html=True)
         else:
             st.warning("Basic Dashboard Mode")
-
+    
         admin_toggle = st.checkbox(
             "Admin Mode",
             help="Enable configuration panel",
             key=f"foundation_admin_toggle_{st.session_state.get('demo_page', 'unknown')}"
         )
-
-
 
         if admin_toggle:
             try:
