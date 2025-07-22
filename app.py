@@ -335,6 +335,7 @@ if st.session_state.get("selected") == "Home":
 # -------------------- LAUNCH DEMO --------------------
 # -------------------- LAUNCH DEMO --------------------
 elif st.session_state.get("selected") == "Launch Demo":
+    
     if st.session_state.demo_page == "main":
         st.markdown("""
             <div style='background-color:#e6f0ff;padding:20px;border-radius:10px;margin-bottom:20px;'>
@@ -358,7 +359,7 @@ elif st.session_state.get("selected") == "Launch Demo":
             with b3:
                 st.button("Legacy HR Systems → SAP Cloud or On-Premise (coming soon)", disabled=True)
 
-            st.image("dmigimg.jpg", use_container_width=True)
+        st.image("dmigimg.jpg", use_container_width=True)
 
     elif st.session_state.demo_page == "sap_to_sf":
         back_col, _ = st.columns([1, 5])
@@ -381,10 +382,10 @@ elif st.session_state.get("selected") == "Launch Demo":
                 with st.expander("ℹ️ Details"):
                     st.markdown(detail_text)
 
-        # ✅ Foundation
+        # Foundation Data
         migration_row("Foundation Data", "fd_demo", "- Legal Entity\n- Job Classification\n- Location\n- Org Units\n...", next_page="foundation_data_view")
 
-        # 🚫 Time (Disabled)
+        # Time Data (disabled)
         col1, col2 = st.columns([5, 3.8])
         with col1:
             st.button("Time Data", key="td_demo_disabled", disabled=True, use_container_width=True)
@@ -402,10 +403,10 @@ elif st.session_state.get("selected") == "Launch Demo":
             </style>
         """, unsafe_allow_html=True)
 
-        # ✅ Payroll
+        # Payroll Data
         migration_row("Payroll Data", "ptd_demo", "- Payment Info\n- Super Funds\n- Cost Allocations\n...", next_page="payroll_data_tool")
 
-        # ✅ Employee
+        # Employee Data V2
         migration_row(
             "Employee Data",
             "pd_demo",
@@ -440,6 +441,7 @@ elif st.session_state.get("selected") == "Launch Demo":
 
         st.markdown("### Employee Data V2 – Interactive Migration Tool")
         render_employee_v2()
+
 
 # -------------------- SOLUTIONS --------------------
 elif selected == "Solutions":
