@@ -47,6 +47,18 @@ except ImportError:
             st.error("Statistics panel not implemented yet")
             st.info("This panel is under development")
         STATISTICS_ENHANCED = False
+# Transformation panel fallback
+try:
+    from .panels.transformation_panel import show_transformation_panel, TransformationLogger
+except ImportError:
+    def show_transformation_panel(state):
+        st.title("Transformation Panel")
+        st.error("Transformation panel not implemented yet")
+        st.info("This panel is under development")
+    
+    class TransformationLogger:
+        def __init__(self):
+            self.logs = []
 
 # Dashboard panel fallback
 try:
