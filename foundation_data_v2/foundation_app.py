@@ -158,12 +158,11 @@ def render_foundation_v2():
 
     st.title("Org Hierarchy Visual Explorer v2.4")
     
-    # ✅ Single sidebar block
     with st.sidebar:
-        # 🔙 Back button goes first
-        if st.button("⬅ Back to Demo"):
+        if st.button("⬅ Back to Migration Options"):
             st.session_state.demo_page = "sap_to_sf"
             st.rerun()
+
     
         st.markdown("---")
         st.title("Navigation")
