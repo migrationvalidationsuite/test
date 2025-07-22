@@ -332,11 +332,8 @@ if st.session_state.get("selected") == "Home":
     </div>
     """, unsafe_allow_html=True)
 
-
 # -------------------- LAUNCH DEMO --------------------
 elif st.session_state.get("selected") == "Launch Demo":
-
-    # 👉 STEP 1: Scenario Selection (Main Launch Pad)
     if st.session_state.demo_page == "main":
         st.markdown("""
             <div style='background-color:#e6f0ff;padding:20px;border-radius:10px;margin-bottom:20px;'>
@@ -348,18 +345,20 @@ elif st.session_state.get("selected") == "Launch Demo":
         col1, col2, col3 = st.columns([1, 3, 1])
         with col2:
             b1, b2, b3 = st.columns(3)
+
             with b1:
                 if st.button("SAP HCM → SuccessFactors", key="btn_sap_sf"):
                     st.session_state.demo_page = "sap_to_sf"
-                    st.rerun()
+                    st.rerun()  # ✅ ensures single-click transition
+
             with b2:
                 st.button("SAP HCM → S/4HANA (coming soon)", disabled=True)
+
             with b3:
                 st.button("Legacy HR Systems → SAP Cloud or On-Premise (coming soon)", disabled=True)
 
             st.image("dmigimg.jpg", use_container_width=True)
 
-    # 👉 STEP 2: SAP HCM → SF migration options
     elif st.session_state.demo_page == "sap_to_sf":
         back_col, _ = st.columns([1, 5])
         with back_col:
@@ -380,21 +379,15 @@ elif st.session_state.get("selected") == "Launch Demo":
             with col2:
                 with st.expander("ℹ️ Details"):
                     st.markdown(detail_text)
+        migration_row("Foundation Data", "fd_demo", "- Legal Entity\n- Job Classification\n- Location\n- Org Units\n...", next_page="foundation_data_view")
 
-        migration_row(
-            "Foundation Data",
-            "fd_demo",
-            "- Legal Entity\n- Job Classification\n- Location\n- Org Units\n...",
-            next_page="foundation_data_view"
-        )
-
+        # Time Data — grayed out and disabled
         col1, col2 = st.columns([5, 3.8])
         with col1:
             st.button("Time Data", key="td_demo_disabled", disabled=True, use_container_width=True)
         with col2:
             with st.expander("ℹ️ Details"):
                 st.markdown("- Time Type\n- Accruals\n- Time Accounts\n- Absences\n...")
-
         st.markdown("""
             <style>
             button[data-testid="baseButton-td_demo_disabled"] {
@@ -405,13 +398,10 @@ elif st.session_state.get("selected") == "Launch Demo":
             </style>
         """, unsafe_allow_html=True)
 
-        migration_row(
-            "Payroll Data",
-            "ptd_demo",
-            "- Payment Info\n- Super Funds\n- Cost Allocations\n...",
-            next_page="payroll_data_tool"
-        )
+        # Payroll Data
+        migration_row("Payroll Data", "ptd_demo", "- Payment Info\n- Super Funds\n- Cost Allocations\n...", next_page="payroll_data_tool")
 
+        # Employee Data V2 — single version only
         migration_row(
             "Employee Data",
             "pd_demo",
@@ -419,69 +409,74 @@ elif st.session_state.get("selected") == "Launch Demo":
             next_page="employee_data_v2"
         )
 
-    # 👉 STEP 3: Foundation Tool View
-    elif st.session_state.demo_page == "foundation_data_view":
-        with st.sidebar:
-            selected = option_menu(
-                menu_title="Navigation",
-                options=["Home", "Solutions", "Launch Demo"],
-                icons=["house", "layers", "rocket"],
-                default_index=2,
-                key="main_sidebar",
-                styles={
-                    "container": {"padding": "0!important", "background-color": "#fafafa"},
-                    "icon": {"color": "black", "font-size": "16px"},
-                    "nav-link": {
-                        "font-size": "16px",
-                        "text-align": "left",
-                        "margin": "0",
-                        "--hover-color": "#eee",
-                    },
-                    "nav-link-selected": {"background-color": "#dbeafe"},
-                }
-            )
-        if selected == "Home":
-            st.session_state.selected = "Home"
-            st.rerun()
-        elif selected == "Solutions":
-            st.session_state.selected = "Solutions"
-            st.rerun()
-        elif selected == "Launch Demo":
-            st.session_state.selected = "Launch Demo"
+
+# ✅ Payroll Page
+elif st.session_state.demo_page == "payroll_data_tool":
+    back_col, _ = st.columns([1, 5])
+    with back_col:
+        if st.button("⬅ Back to Demo", key="back_from_payroll", use_container_width=True):
+            st.session_state.demo_page = "sap_to_sf"
+            st.session_state.tool_subpage = "Tool"
             st.rerun()
 
-        back_col, _ = st.columns([1, 5])
-        with back_col:
-            if st.button("⬅ Back to Demo", key="back_from_foundation_v2", use_container_width=True):
-                st.session_state.demo_page = "sap_to_sf"
-                st.session_state.tool_subpage = "Tool"
-                st.rerun()
+    # ✅ This actually loads your payroll Streamlit tool
+    payroll_app.render_payroll_tool()
 
-        try:
-            render_foundation_v2()
-        except Exception as e:
-            st.error(f"❌ Failed to load Foundation Tool: {e}")
+elif st.session_state.demo_page == "foundation_data_view":
+    with st.sidebar:
+        selected = option_menu(
+            menu_title="Navigation",
+            options=["Home", "Solutions", "Launch Demo"],
+            icons=["house", "layers", "rocket"],
+            default_index=2,
+            key="main_sidebar",
+            styles={
+                "container": {"padding": "0!important", "background-color": "#fafafa"},
+                "icon": {"color": "black", "font-size": "16px"},
+                "nav-link": {
+                    "font-size": "16px",
+                    "text-align": "left",
+                    "margin": "0",
+                    "--hover-color": "#eee",
+                },
+                "nav-link-selected": {"background-color": "#dbeafe"},
+            }
+        )
+    if selected == "Home":
+        st.session_state.selected = "Home"
+        st.rerun()
+    elif selected == "Solutions":
+        st.session_state.selected = "Solutions"
+        st.rerun()
+    elif selected == "Launch Demo":
+        st.session_state.selected = "Launch Demo"
+        st.rerun()
 
-    # 👉 STEP 4: Payroll Tool View
-    elif st.session_state.demo_page == "payroll_data_tool":
-        back_col, _ = st.columns([1, 5])
-        with back_col:
-            if st.button("⬅ Back to Demo", key="back_from_payroll", use_container_width=True):
-                st.session_state.demo_page = "sap_to_sf"
-                st.session_state.tool_subpage = "Tool"
-                st.rerun()
-        payroll_app.render_payroll_tool()
 
-    # 👉 STEP 5: Employee Data V2 View
-    elif st.session_state.demo_page == "employee_data_v2":
-        back_col, _ = st.columns([1, 5])
-        with back_col:
-            if st.button("⬅ Back to Demo", key="back_from_empv2", use_container_width=True):
-                st.session_state.demo_page = "sap_to_sf"
-                st.rerun()
-        st.markdown("### Employee Data V2 – Interactive Migration Tool")
-        render_employee_v2()
+    # ✅ Back button
+    back_col, _ = st.columns([1, 5])
+    with back_col:
+        if st.button("⬅ Back to Demo", key="back_from_foundation_v2", use_container_width=True):
+            st.session_state.demo_page = "sap_to_sf"
+            st.session_state.tool_subpage = "Tool"
+            st.rerun()
 
+    # ✅ Render Foundation Tool
+    try:
+        render_foundation_v2()
+    except Exception as e:
+        st.error(f"❌ Failed to load Foundation Tool: {e}")
+
+# ✅ Employee Data V2 Page
+elif st.session_state.demo_page == "employee_data_v2":
+    back_col, _ = st.columns([1, 5])
+    with back_col:
+        if st.button("⬅ Back to Demo", key="back_from_empv2", use_container_width=True):
+            st.session_state.demo_page = "sap_to_sf"
+            st.rerun()
+
+    st.markdown("### Employee Data V2 – Interactive Migration Tool")
+    render_employee_v2()
 
 
 # -------------------- SOLUTIONS --------------------
