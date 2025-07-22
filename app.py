@@ -349,7 +349,7 @@ elif st.session_state.get("selected") == "Launch Demo":
             with b1:
                 if st.button("SAP HCM → SuccessFactors", key="btn_sap_sf"):
                     st.session_state.demo_page = "sap_to_sf"
-                    st.rerun()  # ✅ ensures single-click transition
+                    st.rerun()
 
             with b2:
                 st.button("SAP HCM → S/4HANA (coming soon)", disabled=True)
@@ -379,15 +379,16 @@ elif st.session_state.get("selected") == "Launch Demo":
             with col2:
                 with st.expander("ℹ️ Details"):
                     st.markdown(detail_text)
+
         migration_row("Foundation Data", "fd_demo", "- Legal Entity\n- Job Classification\n- Location\n- Org Units\n...", next_page="foundation_data_view")
 
-        # Time Data — grayed out and disabled
         col1, col2 = st.columns([5, 3.8])
         with col1:
             st.button("Time Data", key="td_demo_disabled", disabled=True, use_container_width=True)
         with col2:
             with st.expander("ℹ️ Details"):
                 st.markdown("- Time Type\n- Accruals\n- Time Accounts\n- Absences\n...")
+
         st.markdown("""
             <style>
             button[data-testid="baseButton-td_demo_disabled"] {
@@ -398,16 +399,9 @@ elif st.session_state.get("selected") == "Launch Demo":
             </style>
         """, unsafe_allow_html=True)
 
-        # Payroll Data
         migration_row("Payroll Data", "ptd_demo", "- Payment Info\n- Super Funds\n- Cost Allocations\n...", next_page="payroll_data_tool")
 
-        # Employee Data V2 — single version only
-        migration_row(
-            "Employee Data",
-            "pd_demo",
-            "- Personal Info\n- Employment Info\n- Compensation Info\n- Time Info\n...",
-            next_page="employee_data_v2"
-        )
+        migration_row("Employee Data", "pd_demo", "- Personal Info\n- Employment Info\n- Compensation Info\n- Time Info\n...", next_page="employee_data_v2")
 
 
 # ✅ Payroll Page
@@ -418,10 +412,9 @@ elif st.session_state.demo_page == "payroll_data_tool":
             st.session_state.demo_page = "sap_to_sf"
             st.session_state.tool_subpage = "Tool"
             st.rerun()
-
-    # ✅ This actually loads your payroll Streamlit tool
     payroll_app.render_payroll_tool()
 
+# ✅ Foundation Page
 elif st.session_state.demo_page == "foundation_data_view":
     with st.sidebar:
         selected = option_menu(
@@ -452,8 +445,6 @@ elif st.session_state.demo_page == "foundation_data_view":
         st.session_state.selected = "Launch Demo"
         st.rerun()
 
-
-    # ✅ Back button
     back_col, _ = st.columns([1, 5])
     with back_col:
         if st.button("⬅ Back to Demo", key="back_from_foundation_v2", use_container_width=True):
@@ -461,7 +452,6 @@ elif st.session_state.demo_page == "foundation_data_view":
             st.session_state.tool_subpage = "Tool"
             st.rerun()
 
-    # ✅ Render Foundation Tool
     try:
         render_foundation_v2()
     except Exception as e:
@@ -477,6 +467,7 @@ elif st.session_state.demo_page == "employee_data_v2":
 
     st.markdown("### Employee Data V2 – Interactive Migration Tool")
     render_employee_v2()
+
 
 
 # -------------------- SOLUTIONS --------------------
