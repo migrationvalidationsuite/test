@@ -358,9 +358,7 @@ elif st.session_state.demo_page == "payroll_data_tool":
     # ✅ This actually loads your payroll Streamlit tool
     payroll_app.render_payroll_tool()
 
-# ✅ Foundation Data V2 Page
 elif st.session_state.demo_page == "foundation_data_view":
-    # ✅ Keep the main nav sidebar consistent
     with st.sidebar:
         selected = option_menu(
             menu_title="Navigation",
@@ -380,6 +378,16 @@ elif st.session_state.demo_page == "foundation_data_view":
                 "nav-link-selected": {"background-color": "#dbeafe"},
             }
         )
+    if selected == "Home":
+        st.session_state.selected = "Home"
+        st.rerun()
+    elif selected == "Solutions":
+        st.session_state.selected = "Solutions"
+        st.rerun()
+    elif selected == "Launch Demo":
+        st.session_state.selected = "Launch Demo"
+        st.rerun()
+
 
     # ✅ Back button
     back_col, _ = st.columns([1, 5])
