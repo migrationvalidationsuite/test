@@ -110,8 +110,72 @@ if "demo_page" not in st.session_state:
     st.session_state.demo_page = "main"
 
 # ✅ Sidebar navigation with conditional logic
-if st.session_state.get("demo_page") == "foundation_data_view":
-    render_foundation_v2()
+# ✅ Payroll Page
+if st.session_state.demo_page == "payroll_data_tool":
+    back_col, _ = st.columns([1, 5])
+    with back_col:
+        if st.button("⬅ Back to Demo", key="back_from_payroll", use_container_width=True):
+            st.session_state.demo_page = "sap_to_sf"
+            st.session_state.tool_subpage = "Tool"
+            st.rerun()
+    payroll_app.render_payroll_tool()
+
+# ✅ Employee Data V2 Page
+elif st.session_state.demo_page == "employee_data_v2":
+    back_col, _ = st.columns([1, 5])
+    with back_col:
+        if st.button("⬅ Back to Demo", key="back_from_empv2", use_container_width=True):
+            st.session_state.demo_page = "sap_to_sf"
+            st.rerun()
+    st.markdown("### Employee Data V2 – Interactive Migration Tool")
+    render_employee_v2()
+
+# ✅ Foundation Page
+elif st.session_state.demo_page == "foundation_data_view":
+    with st.sidebar:
+        selected = option_menu(
+            menu_title="Navigation",
+            options=["Home", "Solutions", "Launch Demo"],
+            icons=["house", "layers", "rocket"],
+            default_index=2,
+            key="main_sidebar",
+            styles={
+                "container": {"padding": "0!important", "background-color": "#fafafa"},
+                "icon": {"color": "black", "font-size": "16px"},
+                "nav-link": {
+                    "font-size": "16px",
+                    "text-align": "left",
+                    "margin": "0",
+                    "--hover-color": "#eee",
+                },
+                "nav-link-selected": {"background-color": "#dbeafe"},
+            }
+        )
+    if selected == "Home":
+        st.session_state.selected = "Home"
+        st.rerun()
+    elif selected == "Solutions":
+        st.session_state.selected = "Solutions"
+        st.rerun()
+    elif selected == "Launch Demo":
+        st.session_state.selected = "Launch Demo"
+        st.rerun()
+
+    # ✅ Back button
+    back_col, _ = st.columns([1, 5])
+    with back_col:
+        if st.button("⬅ Back to Demo", key="back_from_foundation_v2", use_container_width=True):
+            st.session_state.demo_page = "sap_to_sf"
+            st.session_state.tool_subpage = "Tool"
+            st.rerun()
+
+    # ✅ Render Foundation Tool
+    try:
+        render_foundation_v2()
+    except Exception as e:
+        st.error(f"❌ Failed to load Foundation Tool: {e}")
+
+# ✅ All other routes (Home, Solutions, Launch Demo)
 else:
     with st.sidebar:
         selected = option_menu(
