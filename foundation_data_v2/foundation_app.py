@@ -162,8 +162,7 @@ def render_foundation_v2():
     with st.sidebar:
         # 🔙 Back button goes first
         if st.button("⬅ Back to Demo"):
-            st.session_state.demo_page = "main"
-            st.session_state.selected = "Launch Demo"
+            st.session_state.demo_page = "sap_to_sf"
             st.rerun()
     
         st.markdown("---")
